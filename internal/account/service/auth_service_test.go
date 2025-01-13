@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/fkrhykal/upside-api/internal/account/dto"
@@ -11,6 +12,9 @@ import (
 	"github.com/fkrhykal/upside-api/internal/account/service"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/validation"
+	"github.com/golang-migrate/migrate/v4"
+	pgMigrate "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 	tc "github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -53,13 +57,28 @@ func TestSignUp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := pg.ExecContext(ctx,
-		`CREATE TABLE Users (
-			ID UUID PRIMARY KEY,
-			Username VARCHAR(255) NOT NULL UNIQUE,
-			Password VARCHAR(255) NOT NULL
-		);`,
-	); err != nil {
+	driver, err := pgMigrate.WithInstance(pg, &pgMigrate.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	p, err := filepath.Abs("../../../migrations")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(p)
+
+	m, err := migrate.NewWithDatabaseInstance(
+		fmt.Sprintf("file://%s", filepath.ToSlash(p)),
+		dbName,
+		driver,
+	)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = m.Up(); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS users (
+   id UUID PRIMARY KEY,
+   username VARCHAR (24) UNIQUE NOT NULL,
+   password VARCHAR (225) NOT NULL
+);
