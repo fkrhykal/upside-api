@@ -1,22 +1,19 @@
 package validation
 
+import (
+	"fmt"
+)
+
+type ErrorDetail = map[string]string
+
 type ValidationError struct {
+	Detail ErrorDetail
 }
 
 func (e *ValidationError) Error() string {
-	return ""
+	return fmt.Sprint(e.Detail)
 }
 
 type Validator interface {
-	Validate(data any) *ValidationError
-}
-
-type ValidatorImpl struct{}
-
-func (v *ValidatorImpl) Validate(data any) *ValidationError {
-	return nil
-}
-
-func NewValidator() Validator {
-	return &ValidatorImpl{}
+	Validate(data any) error
 }

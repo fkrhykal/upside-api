@@ -3,13 +3,17 @@ package repository
 import (
 	"github.com/fkrhykal/upside-api/internal/account/entity"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
+	"github.com/fkrhykal/upside-api/internal/shared/log"
 )
 
 type PgUserRepository[T db.SqlExecutor] struct {
+	logger log.Logger
 }
 
-func NewPgUserRepository() UserRepository[db.SqlExecutor] {
-	return &PgUserRepository[db.SqlExecutor]{}
+func NewPgUserRepository(logger log.Logger) UserRepository[db.SqlExecutor] {
+	return &PgUserRepository[db.SqlExecutor]{
+		logger,
+	}
 }
 
 func (r *PgUserRepository[T]) Save(ctx db.DBContext[T], user *entity.User) error {

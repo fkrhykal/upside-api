@@ -3,14 +3,20 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/fkrhykal/upside-api/internal/shared/log"
 )
 
 type SqlContextManager struct {
-	db *sql.DB
+	logger log.Logger
+	db     *sql.DB
 }
 
-func NewSqlContextManager(db *sql.DB) CtxManager[SqlExecutor] {
-	return &SqlContextManager{db}
+func NewSqlContextManager(logger log.Logger, db *sql.DB) CtxManager[SqlExecutor] {
+	return &SqlContextManager{
+		logger: logger,
+		db:     db,
+	}
 }
 
 func (ctxManager *SqlContextManager) NewDBContext(ctx context.Context) DBContext[SqlExecutor] {
