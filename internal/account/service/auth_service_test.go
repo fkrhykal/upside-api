@@ -37,7 +37,7 @@ func (s *AuthServiceTestSuite) TestSignUp() {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(res)
+	t.Logf("sign-up response: %+v", res)
 
 	dbCtx := s.ctxManager.NewDBContext(s.Ctx)
 	user, err := s.userRepository.FindByUsername(dbCtx, req.Username)
@@ -48,7 +48,10 @@ func (s *AuthServiceTestSuite) TestSignUp() {
 	if res.ID.String() != user.ID.String() {
 		t.Fatal("user id mismatch")
 	}
-	t.Log(user)
+	if req.Username != user.Username {
+		t.Fatal("user username mismatch")
+	}
+	t.Logf("user: %+v \n", user)
 }
 
 func (s *AuthServiceTestSuite) SetupSuite() {

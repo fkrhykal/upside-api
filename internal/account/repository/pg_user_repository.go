@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"database/sql"
+	"errors"
+
 	"github.com/fkrhykal/upside-api/internal/account/entity"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
@@ -29,7 +32,9 @@ func (r *PgUserRepository[T]) FindByUsername(ctx db.DBContext[T], username strin
 	err := ctx.Executor().
 		QueryRowContext(ctx, query, username).
 		Scan(&user.ID, &user.Username, &user.Password)
-
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

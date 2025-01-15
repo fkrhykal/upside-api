@@ -39,32 +39,52 @@ type AuthServiceImpl[T any] struct {
 }
 
 func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpRequest) (*dto.SignUpResponse, error) {
-	s.logger.Infof("Received sign-up request for username: %s", request.Username)
+	s.logger.Infof("Attempting to register user with username: %s", request.Username)
 
-	if err := s.validator.Validate(request); err != nil {
-		s.logger.Warnf("Validation failed: %v", err)
+	err := s.validator.Validate(request)
+
+	validationError, ok := err.(*validation.ValidationError)
+	if !ok {
+		s.logger.Errorf("Failed to register user caused by: %+v", err)
+		return nil, err
+	}
+	if validationError.Exist("username") {
+		s.logger.Warnf("User registration failed due to validation error: %+v", validationError)
 		return nil, err
 	}
 
 	dbCtx := s.ctxManager.NewDBContext(ctx)
 
+	user, err := s.userRepository.FindByUsername(dbCtx, request.Username)
+	if err != nil {
+		s.logger.Errorf("Failed to register user caused by: %+v", err)
+		return nil, err
+	}
+	if user != nil {
+		validationError.Add("username", "username already used")
+		s.logger.Warnf("Username already exists: %s, registration failed", request.Username)
+		return nil, validationError
+	}
+
 	hashedPassword, err := s.passwordHasher.Hash(request.Password)
 	if err != nil {
+		s.logger.Errorf("Failed to register user due to password hashing failure: %+v", err)
 		return nil, err
 	}
 
-	user := &entity.User{
+	user = &entity.User{
 		ID:       uuid.New(),
 		Username: request.Username,
 		Password: hashedPassword,
 	}
 
-	s.logger.Debugf("Attempting to save user: %s", user.Username)
+	s.logger.Debugf("Preparing to save new user: %s", user.Username) // Detailed info for debugging
 	if err := s.userRepository.Save(dbCtx, user); err != nil {
 		s.logger.Errorf("Failed to save user %s: %v", user.Username, err)
 		return nil, err
 	}
 
 	s.logger.Infof("Successfully registered user: %s", user.Username)
+
 	return &dto.SignUpResponse{ID: user.ID}, nil
 }
