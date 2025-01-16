@@ -1,0 +1,12 @@
+version: '3.9'
+
+services:
+  upside_pg:
+    container_name: upside_pg
+    image: postgres:17.2-alpine3.21
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: 'upside'
+      POSTGRES_DB: 'upside'
+      POSTGRES_PASSWORD: 'upside'

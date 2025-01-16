@@ -1,10 +1,10 @@
-package validation_test
+package app
 
 import (
 	"testing"
 
 	"github.com/fkrhykal/upside-api/internal/shared/log"
-	"github.com/fkrhykal/upside-api/internal/shared/validation"
+	v "github.com/fkrhykal/upside-api/internal/shared/validation"
 )
 
 type Data struct {
@@ -14,7 +14,7 @@ type Data struct {
 
 func TestGoPlaygroundValidator(t *testing.T) {
 	testLogger := log.NewTestLogger(t)
-	validator := validation.NewGoPlaygroundValidator(testLogger)
+	validator := NewGoPlaygroundValidator(testLogger)
 
 	data := &Data{
 		Amount:  1,
@@ -23,7 +23,7 @@ func TestGoPlaygroundValidator(t *testing.T) {
 
 	err := validator.Validate(data)
 
-	validationError, ok := err.(*validation.ValidationError)
+	validationError, ok := err.(*v.ValidationError)
 	if !ok {
 		t.Fatal(err)
 	}

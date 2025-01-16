@@ -11,7 +11,7 @@ type ValidationError struct {
 }
 
 func (e *ValidationError) Exist(key string) bool {
-	_, ok := e.Detail["key"]
+	_, ok := e.Detail[key]
 	return ok
 }
 

@@ -4,14 +4,15 @@ import (
 	"testing"
 
 	"github.com/fkrhykal/upside-api/internal/account/dto"
-	s "github.com/fkrhykal/upside-api/internal/shared/suite"
+	"github.com/fkrhykal/upside-api/internal/app"
 	"github.com/fkrhykal/upside-api/internal/shared/validation"
+
 	"github.com/go-faker/faker/v4"
 	"github.com/stretchr/testify/suite"
 )
 
 type SignUpRequestDtoValidationSuite struct {
-	s.GoPlaygroundValidationSuite
+	app.GoPlaygroundValidationSuite
 }
 
 func (s *SignUpRequestDtoValidationSuite) TestRequestValid() {

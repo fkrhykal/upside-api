@@ -1,4 +1,4 @@
-package suite
+package app
 
 import (
 	"github.com/fkrhykal/upside-api/internal/shared/log"
@@ -13,5 +13,5 @@ type GoPlaygroundValidationSuite struct {
 
 func (s *GoPlaygroundValidationSuite) SetupSuite() {
 	logger := log.NewTestLogger(s.T())
-	s.Validator = validation.NewGoPlaygroundValidator(logger)
+	s.Validator = NewGoPlaygroundValidator(logger)
 }

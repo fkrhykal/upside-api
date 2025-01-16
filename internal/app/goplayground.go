@@ -1,10 +1,11 @@
-package validation
+package app
 
 import (
 	"reflect"
 	"unicode"
 
 	"github.com/fkrhykal/upside-api/internal/shared/log"
+	"github.com/fkrhykal/upside-api/internal/shared/validation"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -32,13 +33,13 @@ func (g *GoPlaygroundValidator) Validate(data any) error {
 		return err
 	}
 
-	detail := make(ErrorDetail)
+	detail := make(validation.ErrorDetail)
 
 	for _, err := range validationErrors {
 		detail[err.Field()] = err.Translate(g.trans)
 	}
 
-	return &ValidationError{
+	return &validation.ValidationError{
 		Detail: detail,
 	}
 }
@@ -53,7 +54,6 @@ func PasswordValidation(logger log.Logger) validator.Func {
 		hasLower := false
 		hasUpper := false
 		hasSymbol := false
-		hasSpace := false
 
 		for _, c := range password {
 			if !hasLower && unicode.IsLower(c) {
@@ -73,18 +73,17 @@ func PasswordValidation(logger log.Logger) validator.Func {
 				continue
 			}
 			if unicode.IsSpace(c) {
-				hasSpace = true
-				break
+				logger.Debugf("password has space")
+				return false
 			}
 		}
 
 		logger.Debugf("password has lowercase: %+v", hasLower)
 		logger.Debugf("password has uppercase: %+v", hasUpper)
-		logger.Debugf("password has space: %+v", hasSpace)
 		logger.Debugf("password has symbol: %+v", hasSymbol)
 		logger.Debugf("password has number: %+v", hasDigit)
 
-		result := hasLower && hasUpper && hasDigit && hasSymbol && !hasSpace
+		result := hasLower && hasUpper && hasDigit && hasSymbol
 
 		logger.Debugf("password validation result: %+v", result)
 
@@ -92,7 +91,7 @@ func PasswordValidation(logger log.Logger) validator.Func {
 	}
 }
 
-func NewGoPlaygroundValidator(logger log.Logger) Validator {
+func NewGoPlaygroundValidator(logger log.Logger) validation.Validator {
 	v := validator.New()
 	en := en.New()
 	uni := ut.New(en, en)

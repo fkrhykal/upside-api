@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/go-faker/faker/v4"
@@ -10,58 +11,52 @@ import (
 	"github.com/fkrhykal/upside-api/internal/account/repository"
 	"github.com/fkrhykal/upside-api/internal/account/service"
 	"github.com/fkrhykal/upside-api/internal/account/utils"
+	"github.com/fkrhykal/upside-api/internal/app"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
-	s "github.com/fkrhykal/upside-api/internal/shared/suite"
-	"github.com/fkrhykal/upside-api/internal/shared/validation"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
 )
 
 type AuthServiceTestSuite struct {
-	s.PostgresContainerSuite
+	app.PostgresContainerSuite
 	authService    service.AuthService
 	userRepository repository.UserRepository[db.SqlExecutor]
 	ctxManager     db.CtxManager[db.SqlExecutor]
 }
 
 func (s *AuthServiceTestSuite) TestSignUp() {
-	t := s.T()
 
 	req := &dto.SignUpRequest{
 		Username: faker.Username(),
-		Password: faker.Password(),
+		Password: "TestPassword123^$&",
 	}
 
-	res, err := s.authService.SignUp(s.Ctx, req)
+	ctx := context.Background()
+
+	res, err := s.authService.SignUp(ctx, req)
 	if err != nil {
-		t.Fatal(err)
+		s.FailNow("Failed to sign up: ", err)
 	}
-	t.Logf("sign-up response: %+v", res)
 
-	dbCtx := s.ctxManager.NewDBContext(s.Ctx)
+	dbCtx := s.ctxManager.NewDBContext(ctx)
 	user, err := s.userRepository.FindByUsername(dbCtx, req.Username)
 	if err != nil {
-		t.Fatal(err)
+		s.FailNow("Failed find user: ", err)
 	}
 
 	if res.ID.String() != user.ID.String() {
-		t.Fatal("user id mismatch")
+		s.FailNow("User id mismatch")
 	}
 	if req.Username != user.Username {
-		t.Fatal("user username mismatch")
+		s.FailNow("User username mismatch")
 	}
-	t.Logf("user: %+v \n", user)
 }
 
 func (s *AuthServiceTestSuite) SetupSuite() {
 	s.PostgresContainerSuite.SetupSuite()
-
-	t := s.T()
-	logger := log.NewTestLogger(t)
+	logger := log.NewTestLogger(s.T())
 	ctxManager := db.NewSqlContextManager(logger, s.DB)
 	userRepository := repository.NewPgUserRepository(logger)
-	validator := validation.NewGoPlaygroundValidator(logger)
+	validator := app.NewGoPlaygroundValidator(logger)
 	passwordHasher := utils.NewBcryptPasswordHasher()
 	authService := service.NewAuthServiceImpl(logger, ctxManager, userRepository, validator, passwordHasher)
 

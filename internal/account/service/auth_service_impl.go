@@ -42,14 +42,7 @@ func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpReque
 	s.logger.Infof("Attempting to register user with username: %s", request.Username)
 
 	err := s.validator.Validate(request)
-
-	validationError, ok := err.(*validation.ValidationError)
-	if !ok {
-		s.logger.Errorf("Failed to register user caused by: %+v", err)
-		return nil, err
-	}
-	if validationError.Exist("username") {
-		s.logger.Warnf("User registration failed due to validation error: %+v", validationError)
+	if err != nil {
 		return nil, err
 	}
 
@@ -61,9 +54,12 @@ func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpReque
 		return nil, err
 	}
 	if user != nil {
-		validationError.Add("username", "username already used")
 		s.logger.Warnf("Username already exists: %s, registration failed", request.Username)
-		return nil, validationError
+		return nil, &validation.ValidationError{
+			Detail: validation.ErrorDetail{
+				"username": "username already used",
+			},
+		}
 	}
 
 	hashedPassword, err := s.passwordHasher.Hash(request.Password)
@@ -78,7 +74,7 @@ func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpReque
 		Password: hashedPassword,
 	}
 
-	s.logger.Debugf("Preparing to save new user: %s", user.Username) // Detailed info for debugging
+	s.logger.Debugf("Preparing to save new user: %s", user.Username)
 	if err := s.userRepository.Save(dbCtx, user); err != nil {
 		s.logger.Errorf("Failed to save user %s: %v", user.Username, err)
 		return nil, err

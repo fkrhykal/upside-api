@@ -24,6 +24,14 @@ func (log *TestLogger) Errorf(format string, args ...any) {
 	log.t.Logf("ERROR: "+format, args...)
 }
 
+func (log *TestLogger) Info(args ...any) {
+	log.t.Logf("INFO: %+v", args...)
+}
+
+func (log *TestLogger) Debug(args ...any) {
+	log.t.Logf("DEBUG: %+v", args...)
+}
+
 func NewTestLogger(t testing.TB) Logger {
 	return &TestLogger{
 		t: t,
