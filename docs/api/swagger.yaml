@@ -1,6 +1,24 @@
 basePath: /
 definitions:
-  dto.SignUpRequest:
+  ErrorDetail:
+    additionalProperties:
+      type: string
+    type: object
+  Failure-ErrorDetail:
+    properties:
+      code:
+        type: integer
+      error:
+        $ref: '#/definitions/ErrorDetail'
+    type: object
+  Failure-string:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+    type: object
+  SignUpRequest:
     properties:
       password:
         maxLength: 128
@@ -14,20 +32,18 @@ definitions:
     - password
     - username
     type: object
-  dto.SignUpResponse:
+  SignUpResponse:
     properties:
       id:
+        example: b8ae9666-23b8-4ffb-8cf1-f7df0d02130a
         type: string
     type: object
-  handler.SuccessWithData:
+  Success-SignUpResponse:
     properties:
       code:
-        example: 201
         type: integer
-      data: {}
-      message:
-        example: created
-        type: string
+      data:
+        $ref: '#/definitions/SignUpResponse'
     type: object
 info:
   contact: {}
@@ -45,20 +61,23 @@ paths:
         name: SignUpRequest
         required: true
         schema:
-          $ref: '#/definitions/dto.SignUpRequest'
+          $ref: '#/definitions/SignUpRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            allOf:
-            - $ref: '#/definitions/handler.SuccessWithData'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.SignUpResponse'
-              type: object
+            $ref: '#/definitions/Success-SignUpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Failure-ErrorDetail'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Failure-string'
       summary: Sign up
       tags:
-      - accounts
+      - Accounts
 swagger: "2.0"

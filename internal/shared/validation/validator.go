@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type ErrorDetail = map[string]string
+type ErrorDetail = map[string]string //@name ErrorDetail
 
 type ValidationError struct {
 	Detail ErrorDetail

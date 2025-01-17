@@ -24,7 +24,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "accounts"
+                    "Accounts"
                 ],
                 "summary": "Sign up",
                 "parameters": [
@@ -34,7 +34,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SignUpRequest"
+                            "$ref": "#/definitions/SignUpRequest"
                         }
                     }
                 ],
@@ -42,19 +42,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handler.SuccessWithData"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.SignUpResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/Success-SignUpResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-ErrorDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
                         }
                     }
                 }
@@ -62,7 +62,35 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.SignUpRequest": {
+        "ErrorDetail": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "Failure-ErrorDetail": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "error": {
+                    "$ref": "#/definitions/ErrorDetail"
+                }
+            }
+        },
+        "Failure-string": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "SignUpRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -81,25 +109,23 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SignUpResponse": {
+        "SignUpResponse": {
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "b8ae9666-23b8-4ffb-8cf1-f7df0d02130a"
                 }
             }
         },
-        "handler.SuccessWithData": {
+        "Success-SignUpResponse": {
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "integer",
-                    "example": 201
+                    "type": "integer"
                 },
-                "data": {},
-                "message": {
-                    "type": "string",
-                    "example": "created"
+                "data": {
+                    "$ref": "#/definitions/SignUpResponse"
                 }
             }
         }

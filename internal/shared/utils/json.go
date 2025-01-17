@@ -3,12 +3,27 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
-type TypeError = map[string]string
+type TypeErrorDetail = map[string]string
 
-func HandleUnmarshalTypeError(err *json.UnmarshalTypeError) TypeError {
-	detail := make(TypeError)
-	detail[err.Field] = fmt.Sprintf("%s must be %s", err.Field, err.Type)
+var typeMappings = map[string]string{
+	"int":  "integer",
+	"bool": "boolean",
+}
+
+func mapType(t reflect.Type) string {
+	if friendlyType, exists := typeMappings[t.String()]; exists {
+		return friendlyType
+	}
+	return t.String()
+}
+
+func HandleUnmarshalTypeError(err *json.UnmarshalTypeError) TypeErrorDetail {
+	detail := make(TypeErrorDetail)
+
+	friendlyType := mapType(err.Type)
+	detail[err.Field] = fmt.Sprintf("%s must be %s, but found %s", err.Field, friendlyType, err.Value)
 	return detail
 }

@@ -18,6 +18,44 @@ type GoPlaygroundValidator struct {
 	trans  ut.Translator
 }
 
+func NewGoPlaygroundValidator(logger log.Logger) validation.Validator {
+	v := validator.New()
+	en := en.New()
+	uni := ut.New(en, en)
+	trans, _ := uni.GetTranslator(en.Locale())
+	en_translations.RegisterDefaultTranslations(v, trans)
+
+	v.RegisterTagNameFunc(func(field reflect.StructField) string {
+		name := field.Tag.Get("name")
+		if name != "" {
+			return name
+		}
+		json := field.Tag.Get("json")
+		if json == "-" {
+			return ""
+		}
+		return json
+	})
+
+	v.RegisterValidation("password", PasswordValidation(logger))
+
+	v.RegisterTranslation("password", trans, func(ut ut.Translator) error {
+		return ut.Add(
+			"password",
+			"{0} must contain uppercase letter, lowercase letter, number, special character and no space",
+			true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("password", fe.Field())
+		return t
+	})
+
+	return &GoPlaygroundValidator{
+		logger: logger,
+		v:      v,
+		trans:  trans,
+	}
+}
+
 func (g *GoPlaygroundValidator) Validate(data any) error {
 	err := g.v.Struct(data)
 	if err == nil {
@@ -68,7 +106,7 @@ func PasswordValidation(logger log.Logger) validator.Func {
 				hasDigit = true
 				continue
 			}
-			if !hasSymbol && unicode.IsSymbol(c) {
+			if !hasSymbol && validSymbols.Exist(c) {
 				hasSymbol = true
 				continue
 			}
@@ -91,40 +129,44 @@ func PasswordValidation(logger log.Logger) validator.Func {
 	}
 }
 
-func NewGoPlaygroundValidator(logger log.Logger) validation.Validator {
-	v := validator.New()
-	en := en.New()
-	uni := ut.New(en, en)
-	trans, _ := uni.GetTranslator(en.Locale())
-	en_translations.RegisterDefaultTranslations(v, trans)
+type ValidSymbolRegistry map[string]struct{}
 
-	v.RegisterTagNameFunc(func(field reflect.StructField) string {
-		name := field.Tag.Get("name")
-		if name != "" {
-			return name
-		}
-		json := field.Tag.Get("json")
-		if json == "-" {
-			return ""
-		}
-		return json
-	})
+func (s ValidSymbolRegistry) Exist(key rune) bool {
+	_, ok := s[string(key)]
+	return ok
+}
 
-	v.RegisterValidation("password", PasswordValidation(logger))
-
-	v.RegisterTranslation("password", trans, func(ut ut.Translator) error {
-		return ut.Add(
-			"password",
-			"{0} must contain uppercase letter, lowercase letter, number, and special character.",
-			true)
-	}, func(ut ut.Translator, fe validator.FieldError) string {
-		t, _ := ut.T("password", fe.Field())
-		return t
-	})
-
-	return &GoPlaygroundValidator{
-		logger: logger,
-		v:      v,
-		trans:  trans,
-	}
+var validSymbols = ValidSymbolRegistry{
+	"!":  {},
+	"@":  {},
+	"#":  {},
+	"$":  {},
+	"%":  {},
+	"^":  {},
+	"&":  {},
+	"*":  {},
+	"(":  {},
+	")":  {},
+	"-":  {},
+	"_":  {},
+	"=":  {},
+	"+":  {},
+	"[":  {},
+	"]":  {},
+	"{":  {},
+	"}":  {},
+	"\\": {},
+	"|":  {},
+	";":  {},
+	":":  {},
+	"'":  {},
+	"\"": {},
+	",":  {},
+	".":  {},
+	"/":  {},
+	"?":  {},
+	"<":  {},
+	">":  {},
+	"~":  {},
+	"`":  {},
 }
