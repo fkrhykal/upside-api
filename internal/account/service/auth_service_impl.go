@@ -2,12 +2,15 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/fkrhykal/upside-api/internal/account/dto"
 	"github.com/fkrhykal/upside-api/internal/account/entity"
 	"github.com/fkrhykal/upside-api/internal/account/repository"
 	"github.com/fkrhykal/upside-api/internal/account/utils"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
+	"github.com/fkrhykal/upside-api/internal/shared/exception"
+	"github.com/fkrhykal/upside-api/internal/shared/helpers"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
 	"github.com/fkrhykal/upside-api/internal/shared/validation"
 
@@ -31,30 +34,31 @@ func NewAuthServiceImpl[T any](
 }
 
 type AuthServiceImpl[T any] struct {
-	logger         log.Logger
-	userRepository repository.UserRepository[T]
-	ctxManager     db.CtxManager[T]
-	validator      validation.Validator
-	passwordHasher utils.PasswordHasher
+	logger            log.Logger
+	userRepository    repository.UserRepository[T]
+	ctxManager        db.CtxManager[T]
+	validator         validation.Validator
+	passwordHasher    utils.PasswordHasher
+	credentialService CredentialService
 }
 
-func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpRequest) (*dto.SignUpResponse, error) {
-	s.logger.Infof("Attempting to register user with username: %s", request.Username)
+func (s *AuthServiceImpl[T]) SignUp(ctx context.Context, req *dto.SignUpRequest) (*dto.SignUpResponse, error) {
+	s.logger.Infof("Attempting to register user with username: %s", req.Username)
 
-	err := s.validator.Validate(request)
+	err := s.validator.Validate(req)
 	if err != nil {
 		return nil, err
 	}
 
 	dbCtx := s.ctxManager.NewDBContext(ctx)
 
-	user, err := s.userRepository.FindByUsername(dbCtx, request.Username)
+	user, err := s.userRepository.FindByUsername(dbCtx, req.Username)
 	if err != nil {
 		s.logger.Errorf("Failed to register user caused by: %+v", err)
 		return nil, err
 	}
 	if user != nil {
-		s.logger.Warnf("Username already exists: %s, registration failed", request.Username)
+		s.logger.Warnf("Username already exists: %s, registration failed", req.Username)
 		return nil, &validation.ValidationError{
 			Detail: validation.ErrorDetail{
 				"username": "username already used",
@@ -62,7 +66,7 @@ func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpReque
 		}
 	}
 
-	hashedPassword, err := s.passwordHasher.Hash(request.Password)
+	hashedPassword, err := s.passwordHasher.Hash(req.Password)
 	if err != nil {
 		s.logger.Errorf("Failed to register user due to password hashing failure: %+v", err)
 		return nil, err
@@ -70,7 +74,7 @@ func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpReque
 
 	user = &entity.User{
 		ID:       uuid.New(),
-		Username: request.Username,
+		Username: req.Username,
 		Password: hashedPassword,
 	}
 
@@ -83,4 +87,31 @@ func (s AuthServiceImpl[T]) SignUp(ctx context.Context, request *dto.SignUpReque
 	s.logger.Infof("Successfully registered user: %s", user.Username)
 
 	return &dto.SignUpResponse{ID: user.ID}, nil
+}
+
+func (s *AuthServiceImpl[T]) SignIn(ctx context.Context, req *dto.SignInRequest) (*dto.SignInResponse, error) {
+	err := s.validator.Validate(req)
+	if err != nil {
+		s.logger.Errorf("%+v", err)
+		return nil, exception.ErrAuthentication
+	}
+	dbCtx := s.ctxManager.NewDBContext(ctx)
+	user, err := s.userRepository.FindByUsername(dbCtx, req.Username)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, exception.ErrAuthentication
+	}
+
+	if matches := s.passwordHasher.Match(req.Password, user.Password); !matches {
+		return nil, exception.ErrAuthentication
+	}
+
+	token, err := s.credentialService.GenerateToken(ctx, &dto.UserCredential{ID: user.ID}, time.Now().Add(helpers.WEEK))
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.SignInResponse{Token: token}, nil
 }

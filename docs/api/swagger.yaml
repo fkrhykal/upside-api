@@ -18,6 +18,25 @@ definitions:
       error:
         type: string
     type: object
+  SignInRequest:
+    properties:
+      password:
+        maxLength: 128
+        minLength: 8
+        type: string
+      username:
+        maxLength: 16
+        minLength: 4
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  SignInResponse:
+    properties:
+      token:
+        type: string
+    type: object
   SignUpRequest:
     properties:
       password:
@@ -38,6 +57,13 @@ definitions:
         example: b8ae9666-23b8-4ffb-8cf1-f7df0d02130a
         type: string
     type: object
+  Success-SignInResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/SignInResponse'
+    type: object
   Success-SignUpResponse:
     properties:
       code:
@@ -51,6 +77,39 @@ info:
   title: Upside API
   version: "1.0"
 paths:
+  /auth/_sign-in:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body for sign in
+        in: body
+        name: SignInRequest
+        required: true
+        schema:
+          $ref: '#/definitions/SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Success-SignInResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Failure-ErrorDetail'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Failure-string'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Failure-string'
+      summary: Sign in
+      tags:
+      - Accounts
   /auth/_sign-up:
     post:
       consumes:

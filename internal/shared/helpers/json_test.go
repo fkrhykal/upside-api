@@ -1,10 +1,10 @@
-package utils_test
+package helpers_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	"github.com/fkrhykal/upside-api/internal/shared/utils"
+	"github.com/fkrhykal/upside-api/internal/shared/helpers"
 )
 
 type Data struct {
@@ -24,7 +24,7 @@ func TestHandleDataMessageUnmarshalTypeError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	detail := utils.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))
+	detail := helpers.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))
 
 	message, ok := detail["message"]
 	if !ok {
@@ -46,7 +46,7 @@ func TestHandleDataItemsUnmarshalTypeError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	detail := utils.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))
+	detail := helpers.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))
 
 	message, ok := detail["items"]
 	if !ok {
@@ -68,7 +68,7 @@ func TestHandleDataAmountUnmarshalTypeError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	detail := utils.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))
+	detail := helpers.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))
 
 	message, ok := detail["amount"]
 	if !ok {

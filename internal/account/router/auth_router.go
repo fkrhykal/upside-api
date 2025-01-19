@@ -11,6 +11,7 @@ func AuthRouter(logger log.Logger, authService service.AuthService) func(*fiber.
 	return func(app *fiber.App) {
 		app.Route("/auth", func(router fiber.Router) {
 			router.Post("/_sign-up", handler.SignUpHandler(logger, authService))
+			router.Post("/_sign-in", handler.SignInHandler(logger, authService))
 		})
 	}
 }
