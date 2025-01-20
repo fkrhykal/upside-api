@@ -23,10 +23,11 @@ func main() {
 	}
 
 	app.Bootstrap(&app.BootstrapConfig{
-		Fiber:     fiber,
-		Logger:    logger,
-		DB:        pg,
-		Validator: validator,
+		Fiber:               fiber,
+		Logger:              logger,
+		DB:                  pg,
+		Validator:           validator,
+		JwtCredentialConfig: config.DefaultJwtCredentialConfig(),
 	})
 
 	if err := fiber.Listen(":8080"); err != nil {

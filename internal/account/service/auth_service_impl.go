@@ -23,13 +23,15 @@ func NewAuthServiceImpl[T any](
 	userRepository repository.UserRepository[T],
 	validator validation.Validator,
 	passwordHasher utils.PasswordHasher,
+	credentialService CredentialService,
 ) AuthService {
 	return &AuthServiceImpl[T]{
-		logger:         logger,
-		userRepository: userRepository,
-		ctxManager:     ctxManager,
-		validator:      validator,
-		passwordHasher: passwordHasher,
+		logger:            logger,
+		userRepository:    userRepository,
+		ctxManager:        ctxManager,
+		validator:         validator,
+		passwordHasher:    passwordHasher,
+		credentialService: credentialService,
 	}
 }
 

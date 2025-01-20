@@ -14,6 +14,7 @@ import (
 )
 
 type BootstrapConfig struct {
+	*service.JwtCredentialConfig
 	DB        *sql.DB
 	Validator validation.Validator
 	Logger    log.Logger
@@ -26,8 +27,9 @@ func Bootstrap(config *BootstrapConfig) {
 
 	userRepository := repository.NewPgUserRepository(config.Logger)
 
+	credentialService := service.NewJwtCredentialService(config.Logger, config.JwtCredentialConfig)
 	authService := service.NewAuthServiceImpl(
-		config.Logger, ctxManager, userRepository, config.Validator, passwordHasher)
+		config.Logger, ctxManager, userRepository, config.Validator, passwordHasher, service.CredentialService(credentialService))
 
 	setupRoutes(
 		config.Fiber,
