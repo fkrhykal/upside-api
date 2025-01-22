@@ -92,28 +92,41 @@ func (s *AuthServiceImpl[T]) SignUp(ctx context.Context, req *dto.SignUpRequest)
 }
 
 func (s *AuthServiceImpl[T]) SignIn(ctx context.Context, req *dto.SignInRequest) (*dto.SignInResponse, error) {
+	s.logger.Infof("SignIn attempt started for username: %s", req.Username)
+
 	err := s.validator.Validate(req)
 	if err != nil {
-		s.logger.Errorf("%+v", err)
+		s.logger.Errorf("Validation failed for SignIn request: %+v", err)
 		return nil, exception.ErrAuthentication
 	}
+
 	dbCtx := s.ctxManager.NewDBContext(ctx)
+	s.logger.Debugf("Attempting to retrieve user with username: %s", req.Username)
+
 	user, err := s.userRepository.FindByUsername(dbCtx, req.Username)
 	if err != nil {
+		s.logger.Errorf("Error while retrieving user by username %s: %v", req.Username, err)
 		return nil, err
 	}
+
 	if user == nil {
+		s.logger.Warnf("Authentication failed: no user found with username %s", req.Username)
 		return nil, exception.ErrAuthentication
 	}
 
+	s.logger.Debug("Matching provided password with stored hash")
 	if matches := s.passwordHasher.Match(req.Password, user.Password); !matches {
+		s.logger.Warnf("Authentication failed: password mismatch for username %s", req.Username)
 		return nil, exception.ErrAuthentication
 	}
 
+	s.logger.Debugf("Generating token for user ID: %s", user.ID)
 	token, err := s.credentialService.GenerateToken(ctx, &dto.UserCredential{ID: user.ID}, time.Now().Add(helpers.WEEK))
 	if err != nil {
+		s.logger.Errorf("Error generating token for user ID %s: %v", user.ID, err)
 		return nil, err
 	}
 
+	s.logger.Infof("User signed in successfully: %s", req.Username)
 	return &dto.SignInResponse{Token: token}, nil
 }

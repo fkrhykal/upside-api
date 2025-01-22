@@ -26,7 +26,7 @@ type PostgresDBConfig struct {
 }
 
 func NewPostgresDB(config *PostgresDBConfig) (*PostgresDB, error) {
-	config.Logger.Debugf("Initializing PostgreSQL connection with config: %+v", config)
+	config.Logger.Debug("Initializing PostgreSQL connection")
 
 	dataSource := fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%+v",
