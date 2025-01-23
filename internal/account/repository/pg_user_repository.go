@@ -7,6 +7,7 @@ import (
 	"github.com/fkrhykal/upside-api/internal/account/entity"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
+	"github.com/google/uuid"
 )
 
 type PgUserRepository[T db.SqlExecutor] struct {
@@ -31,6 +32,21 @@ func (r *PgUserRepository[T]) FindByUsername(ctx db.DBContext[T], username strin
 	query := "SELECT id, username, password FROM users WHERE username = $1"
 	err := ctx.Executor().
 		QueryRowContext(ctx, query, username).
+		Scan(&user.ID, &user.Username, &user.Password)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *PgUserRepository[T]) FindById(ctx db.DBContext[T], id uuid.UUID) (*entity.User, error) {
+	user := new(entity.User)
+	query := "SELECT id, username, password FROM users WHERE id = $1"
+	err := ctx.Executor().
+		QueryRowContext(ctx, query, id.String()).
 		Scan(&user.ID, &user.Username, &user.Password)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil

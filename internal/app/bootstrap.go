@@ -29,11 +29,13 @@ func Bootstrap(config *BootstrapConfig) {
 
 	credentialService := service.NewJwtCredentialService(config.Logger, config.JwtCredentialConfig)
 	authService := service.NewAuthServiceImpl(
-		config.Logger, ctxManager, userRepository, config.Validator, passwordHasher, service.CredentialService(credentialService))
+		config.Logger, ctxManager, userRepository, config.Validator, passwordHasher, credentialService)
+	userService := service.NewUserServiceImpl(config.Logger, ctxManager, userRepository)
 
 	setupRoutes(
 		config.Fiber,
 		router.AuthRouter(config.Logger, authService),
+		router.UserRouter(config.Logger, userService),
 	)
 }
 

@@ -103,6 +103,47 @@
                     }
                 }
             }
+        },
+        "/users/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get User Detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "28fd7c57-ffde-4b4b-83c3-4781d93c268e",
+                        "description": "user id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Success-dto_UserDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -208,6 +249,28 @@
                 },
                 "data": {
                     "$ref": "#/definitions/SignUpResponse"
+                }
+            }
+        },
+        "Success-dto_UserDetail": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.UserDetail"
+                }
+            }
+        },
+        "dto.UserDetail": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         }

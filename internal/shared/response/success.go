@@ -7,6 +7,11 @@ type Success[T any] struct {
 	Data T   `json:"data"`
 } //@name Success
 
-func SuccessWithData[T any, P int](c *fiber.Ctx, code P, data T) error {
-	return c.Status(int(code)).JSON(data)
+func SuccessWithData[T any](c *fiber.Ctx, code int, data T) error {
+	return c.Status(int(code)).JSON(
+		&Success[T]{
+			Code: code,
+			Data: data,
+		},
+	)
 }
