@@ -15,7 +15,6 @@ import (
 // @Param		SignInRequest body dto.SignInRequest true "Request body for sign in"
 // @Router		/auth/_sign-in [post]
 // @Success		200 {object} response.Success[dto.SignInResponse]
-// @Failure		400 {object} response.Failure[validation.ErrorDetail]
 // @Failure		401 {object} response.Failure[string]
 // @Failure		500 {object} response.Failure[string]
 func SignInHandler(logger log.Logger, authService service.AuthService) fiber.Handler {

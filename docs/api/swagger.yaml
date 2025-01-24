@@ -36,6 +36,8 @@ definitions:
     properties:
       token:
         type: string
+      user:
+        $ref: '#/definitions/dto.UserDetail'
     type: object
   SignUpRequest:
     properties:
@@ -109,10 +111,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Success-SignInResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/Failure-ErrorDetail'
         "401":
           description: Unauthorized
           schema:

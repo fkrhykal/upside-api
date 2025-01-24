@@ -45,12 +45,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/Success-SignInResponse"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/Failure-ErrorDetail"
-                        }
-                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -206,6 +200,9 @@ const docTemplate = `{
             "properties": {
                 "token": {
                     "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.UserDetail"
                 }
             }
         },

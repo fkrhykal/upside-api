@@ -7,4 +7,5 @@ type SignInRequest struct {
 
 type SignInResponse struct {
 	Token CredentialToken `json:"token"`
+	User  *UserDetail     `json:"user"`
 } //@name SignInResponse

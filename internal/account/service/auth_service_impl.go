@@ -128,5 +128,10 @@ func (s *AuthServiceImpl[T]) SignIn(ctx context.Context, req *dto.SignInRequest)
 	}
 
 	s.logger.Infof("User signed in successfully: %s", req.Username)
-	return &dto.SignInResponse{Token: token}, nil
+	return &dto.SignInResponse{
+		Token: token,
+		User: &dto.UserDetail{
+			ID:       user.ID,
+			Username: user.Username,
+		}}, nil
 }
