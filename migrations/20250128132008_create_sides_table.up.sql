@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS sides (
+   id UUID PRIMARY KEY,
+   nick VARCHAR (24) UNIQUE NOT NULL,
+   name VARCHAR (64) NOT NULL,
+   description TEXT NOT NULL,
+   created_at BIGINT NOT NULL
+);

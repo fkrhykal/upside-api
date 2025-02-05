@@ -26,10 +26,6 @@ func NewGoPlaygroundValidator(logger log.Logger) validation.Validator {
 	en_translations.RegisterDefaultTranslations(v, trans)
 
 	v.RegisterTagNameFunc(func(field reflect.StructField) string {
-		name := field.Tag.Get("name")
-		if name != "" {
-			return name
-		}
 		json := field.Tag.Get("json")
 		if json == "-" {
 			return ""

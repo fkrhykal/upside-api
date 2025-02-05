@@ -33,9 +33,7 @@ func (s *PostgresContainerSuite) SetupSuite() {
 	s.setupContainer()
 
 	pg, err := NewPostgresDB(s.config)
-	if err != nil {
-		s.FailNow("Failed to create PostgresDB: ", err)
-	}
+	s.Nil(err, "Failed to create PostgresDB:", err)
 	s.DB = pg
 }
 

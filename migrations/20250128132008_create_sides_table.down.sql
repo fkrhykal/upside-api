@@ -1,0 +1,1 @@
+DROP TABLE sides IF NOT EXISTS;

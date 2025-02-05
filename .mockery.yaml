@@ -1,0 +1,18 @@
+with-expecter: True
+resolve-type-alias: False
+issue-845-fix: True
+filename: '{{ .InterfaceName | snakecase }}_mock.go'
+dir: '{{.InterfaceDir}}'
+mockname: 'Mock{{.InterfaceName}}'
+outpkg: '{{.PackageName}}'
+inpackage: True
+packages:
+  github.com/fkrhykal/upside-api/internal/side/repository:
+    interfaces:
+      SideRepository:
+      MembershipRepository:
+  github.com/fkrhykal/upside-api/internal/shared/db:
+    interfaces:
+      CtxManager:
+      DBContext:
+      TxContext:

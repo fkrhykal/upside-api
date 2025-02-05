@@ -37,9 +37,9 @@ func (txCtx *SqlTxContext) Executor() SqlExecutor {
 }
 
 func (txCtx *SqlTxContext) Rollback() error {
-	return txCtx.Rollback()
+	return txCtx.executor.Rollback()
 }
 
 func (txCtx *SqlTxContext) Commit() error {
-	return txCtx.Commit()
+	return txCtx.executor.Commit()
 }
