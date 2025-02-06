@@ -14,6 +14,7 @@ import (
 	"github.com/fkrhykal/upside-api/internal/account/service"
 	"github.com/fkrhykal/upside-api/internal/account/utils"
 	"github.com/fkrhykal/upside-api/internal/app"
+	"github.com/fkrhykal/upside-api/internal/shared/auth"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/exception"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
@@ -21,11 +22,11 @@ import (
 
 type AuthServiceTestSuite struct {
 	app.PostgresContainerSuite
-	authService       service.AuthService
-	userRepository    repository.UserRepository[db.SqlExecutor]
-	ctxManager        db.CtxManager[db.SqlExecutor]
-	passwordHasher    utils.PasswordHasher
-	credentialService service.CredentialService
+	authService    service.AuthService
+	userRepository repository.UserRepository[db.SqlExecutor]
+	ctxManager     db.CtxManager[db.SqlExecutor]
+	passwordHasher utils.PasswordHasher
+	authProvider   auth.AuthProvider
 }
 
 func (s *AuthServiceTestSuite) TestSignUp() {
@@ -76,7 +77,7 @@ func (s *AuthServiceTestSuite) TestSignIn() {
 	res, err := s.authService.SignIn(ctx, req)
 	s.Nil(err, "Failed to sign-in: %+v", err)
 
-	credential, err := s.credentialService.RetrieveUserCredential(ctx, res.Token)
+	credential, err := s.authProvider.RetrieveCredential(ctx, res.Token)
 	s.Nil(err, "Failed to retrieve credential: %+v", err)
 
 	s.EqualValues(user.ID, credential.ID, "User id and credential id mismatch: %+v", err)
@@ -128,7 +129,7 @@ func (s *AuthServiceTestSuite) SetupSuite() {
 	userRepository := repository.NewPgUserRepository(logger)
 	validator := app.NewGoPlaygroundValidator(logger)
 	passwordHasher := utils.NewBcryptPasswordHasher()
-	credentialService := service.NewJwtCredentialService(logger, &service.JwtCredentialConfig{
+	credentialService := auth.NewJwtAuthProvider(logger, &auth.JwtAuthConfig{
 		SignedKey: []byte("secret"),
 	})
 	authService := service.NewAuthServiceImpl(logger, ctxManager, userRepository, validator, passwordHasher, credentialService)
@@ -137,7 +138,7 @@ func (s *AuthServiceTestSuite) SetupSuite() {
 	s.userRepository = userRepository
 	s.authService = authService
 	s.ctxManager = ctxManager
-	s.credentialService = credentialService
+	s.authProvider = credentialService
 }
 
 func TestAuthService(t *testing.T) {

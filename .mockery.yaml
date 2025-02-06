@@ -7,12 +7,3 @@ mockname: 'Mock{{.InterfaceName}}'
 outpkg: '{{.PackageName}}'
 inpackage: True
 packages:
-  github.com/fkrhykal/upside-api/internal/side/repository:
-    interfaces:
-      SideRepository:
-      MembershipRepository:
-  github.com/fkrhykal/upside-api/internal/shared/db:
-    interfaces:
-      CtxManager:
-      DBContext:
-      TxContext:

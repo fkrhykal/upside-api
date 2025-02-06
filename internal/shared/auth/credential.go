@@ -1,9 +1,9 @@
-package dto
+package auth
 
 import "github.com/google/uuid"
 
 type UserCredential struct {
-	ID uuid.UUID `json:"id"`
+	ID uuid.UUID
 }
 
-type CredentialToken string
+type Token string

@@ -8,6 +8,7 @@ import (
 	"github.com/fkrhykal/upside-api/internal/account/entity"
 	"github.com/fkrhykal/upside-api/internal/account/repository"
 	"github.com/fkrhykal/upside-api/internal/account/utils"
+	"github.com/fkrhykal/upside-api/internal/shared/auth"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/exception"
 	"github.com/fkrhykal/upside-api/internal/shared/helpers"
@@ -23,25 +24,25 @@ func NewAuthServiceImpl[T any](
 	userRepository repository.UserRepository[T],
 	validator validation.Validator,
 	passwordHasher utils.PasswordHasher,
-	credentialService CredentialService,
+	authProvider auth.AuthProvider,
 ) AuthService {
 	return &AuthServiceImpl[T]{
-		logger:            logger,
-		userRepository:    userRepository,
-		ctxManager:        ctxManager,
-		validator:         validator,
-		passwordHasher:    passwordHasher,
-		credentialService: credentialService,
+		logger:         logger,
+		userRepository: userRepository,
+		ctxManager:     ctxManager,
+		validator:      validator,
+		passwordHasher: passwordHasher,
+		authProvider:   authProvider,
 	}
 }
 
 type AuthServiceImpl[T any] struct {
-	logger            log.Logger
-	userRepository    repository.UserRepository[T]
-	ctxManager        db.CtxManager[T]
-	validator         validation.Validator
-	passwordHasher    utils.PasswordHasher
-	credentialService CredentialService
+	logger         log.Logger
+	userRepository repository.UserRepository[T]
+	ctxManager     db.CtxManager[T]
+	validator      validation.Validator
+	passwordHasher utils.PasswordHasher
+	authProvider   auth.AuthProvider
 }
 
 func (s *AuthServiceImpl[T]) SignUp(ctx context.Context, req *dto.SignUpRequest) (*dto.SignUpResponse, error) {
@@ -121,7 +122,7 @@ func (s *AuthServiceImpl[T]) SignIn(ctx context.Context, req *dto.SignInRequest)
 	}
 
 	s.logger.Debugf("Generating token for user ID: %s", user.ID)
-	token, err := s.credentialService.GenerateToken(ctx, &dto.UserCredential{ID: user.ID}, time.Now().Add(helpers.WEEK))
+	token, err := s.authProvider.GenerateToken(ctx, &auth.UserCredential{ID: user.ID}, time.Now().Add(helpers.WEEK))
 	if err != nil {
 		s.logger.Errorf("Error generating token for user ID %s: %v", user.ID, err)
 		return nil, err

@@ -36,6 +36,7 @@ func SetupErrorHandler(logger log.Logger) fiber.ErrorHandler {
 			logger.Debug(err)
 			return response.FailureFromFiber(c, fiber.ErrUnauthorized)
 		case *fiber.Error:
+			logger.Errorf("Fiber error: %+v", err)
 			return response.FailureFromFiber(c, err.(*fiber.Error))
 		case *json.UnmarshalTypeError:
 			detail := helpers.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))

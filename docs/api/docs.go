@@ -105,6 +105,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/sides": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sides"
+                ],
+                "summary": "Create Side",
+                "parameters": [
+                    {
+                        "description": "Request body for create side",
+                        "name": "CreateSideRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateSideRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Success-dto_CreateSideResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "get": {
                 "produces": [
@@ -256,6 +303,17 @@ const docTemplate = `{
                 }
             }
         },
+        "Success-dto_CreateSideResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.CreateSideResponse"
+                }
+            }
+        },
         "Success-dto_UserDetail": {
             "type": "object",
             "properties": {
@@ -264,6 +322,33 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/dto.UserDetail"
+                }
+            }
+        },
+        "dto.CreateSideRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "name",
+                "nick"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nick": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateSideResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
                 }
             }
         },
@@ -277,6 +362,14 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Bearer token authentication schema, format: Bearer \u003cyour-credential-token\u003e",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

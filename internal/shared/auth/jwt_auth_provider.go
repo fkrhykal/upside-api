@@ -1,29 +1,28 @@
-package service
+package auth
 
 import (
 	"context"
 	"time"
 
-	"github.com/fkrhykal/upside-api/internal/account/dto"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type JwtCredentialConfig struct {
+type JwtAuthConfig struct {
 	SignedKey []byte
 }
 
 type AuthenticationClams struct {
 	jwt.RegisteredClaims
-	UserCredential *dto.UserCredential `json:"userCredential"`
+	UserCredential *UserCredential `json:"userCredential"`
 }
 
-type JwtCredentialService struct {
+type JwtAuthProvider struct {
 	logger log.Logger
-	config *JwtCredentialConfig
+	config *JwtAuthConfig
 }
 
-func (s *JwtCredentialService) GenerateToken(ctx context.Context, credential *dto.UserCredential, expiredAt time.Time) (dto.CredentialToken, error) {
+func (s *JwtAuthProvider) GenerateToken(ctx context.Context, credential *UserCredential, expiredAt time.Time) (Token, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, *&AuthenticationClams{
 		UserCredential: credential,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -32,10 +31,10 @@ func (s *JwtCredentialService) GenerateToken(ctx context.Context, credential *dt
 		},
 	})
 	signedJwt, err := jwtToken.SignedString(s.config.SignedKey)
-	return dto.CredentialToken(signedJwt), err
+	return Token(signedJwt), err
 }
 
-func (s *JwtCredentialService) RetrieveUserCredential(ctx context.Context, token dto.CredentialToken) (*dto.UserCredential, error) {
+func (s *JwtAuthProvider) RetrieveCredential(ctx context.Context, token Token) (*UserCredential, error) {
 	jwtToken, err := jwt.ParseWithClaims(string(token), &AuthenticationClams{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer: "upside",
@@ -49,8 +48,8 @@ func (s *JwtCredentialService) RetrieveUserCredential(ctx context.Context, token
 	return jwtToken.Claims.(*AuthenticationClams).UserCredential, nil
 }
 
-func NewJwtCredentialService(logger log.Logger, config *JwtCredentialConfig) *JwtCredentialService {
-	return &JwtCredentialService{
+func NewJwtAuthProvider(logger log.Logger, config *JwtAuthConfig) AuthProvider {
+	return &JwtAuthProvider{
 		logger: logger,
 		config: config,
 	}

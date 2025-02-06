@@ -73,12 +73,37 @@ definitions:
       data:
         $ref: '#/definitions/SignUpResponse'
     type: object
+  Success-dto_CreateSideResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.CreateSideResponse'
+    type: object
   Success-dto_UserDetail:
     properties:
       code:
         type: integer
       data:
         $ref: '#/definitions/dto.UserDetail'
+    type: object
+  dto.CreateSideRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      nick:
+        type: string
+    required:
+    - description
+    - name
+    - nick
+    type: object
+  dto.CreateSideResponse:
+    properties:
+      id:
+        type: string
     type: object
   dto.UserDetail:
     properties:
@@ -151,6 +176,35 @@ paths:
       summary: Sign up
       tags:
       - Accounts
+  /sides:
+    post:
+      parameters:
+      - description: Request body for create side
+        in: body
+        name: CreateSideRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateSideRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Success-dto_CreateSideResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Failure-string'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Failure-string'
+      security:
+      - BearerAuth: []
+      summary: Create Side
+      tags:
+      - Sides
   /users/{id}:
     get:
       parameters:
@@ -178,4 +232,10 @@ paths:
       summary: Get User Detail
       tags:
       - Users
+securityDefinitions:
+  BearerAuth:
+    description: 'Bearer token authentication schema, format: Bearer <your-credential-token>'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

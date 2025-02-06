@@ -20,7 +20,9 @@ import (
 func SignInHandler(logger log.Logger, authService service.AuthService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		req := new(dto.SignInRequest)
-		c.BodyParser(req)
+		if err := c.BodyParser(req); err != nil {
+			return err
+		}
 		res, err := authService.SignIn(c.UserContext(), req)
 		if err != nil {
 			return err
