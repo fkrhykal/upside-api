@@ -106,6 +106,54 @@ const docTemplate = `{
             }
         },
         "/sides": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sides"
+                ],
+                "summary": "Get Sides",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "side filter e.g. 'popular'",
+                        "name": "filter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "number sides per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "number of page",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Success-dto_GetSidesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -314,6 +362,17 @@ const docTemplate = `{
                 }
             }
         },
+        "Success-dto_GetSidesResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.GetSidesResponse"
+                }
+            }
+        },
         "Success-dto_UserDetail": {
             "type": "object",
             "properties": {
@@ -334,13 +393,18 @@ const docTemplate = `{
             ],
             "properties": {
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 1000
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 4
                 },
                 "nick": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 24,
+                    "minLength": 4
                 }
             }
         },
@@ -348,6 +412,48 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.GetSidesResponse": {
+            "type": "object",
+            "properties": {
+                "metadata": {
+                    "$ref": "#/definitions/pagination.OffsetBasedMetadata"
+                },
+                "sides": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Side"
+                    }
+                }
+            }
+        },
+        "dto.MembershipDetail": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Side": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "membershipDetail": {
+                    "$ref": "#/definitions/dto.MembershipDetail"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nick": {
                     "type": "string"
                 }
             }
@@ -360,6 +466,20 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "pagination.OffsetBasedMetadata": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "perPage": {
+                    "type": "integer"
+                },
+                "totalPage": {
+                    "type": "integer"
                 }
             }
         }

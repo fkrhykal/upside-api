@@ -19,7 +19,11 @@ func (c *FiberCredentialRegistry) SetCredential(credential *UserCredential) {
 }
 
 func (c *FiberCredentialRegistry) GetCredential() *UserCredential {
-	return c.Locals(CredentialKey).(*UserCredential)
+	credential, ok := c.Locals(CredentialKey).(*UserCredential)
+	if !ok {
+		return nil
+	}
+	return credential
 }
 
 func NewFiberCredentialRegistry(c *fiber.Ctx) *FiberCredentialRegistry {

@@ -42,14 +42,9 @@ func NewSideServiceImpl[T any](
 func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error) {
 	dbCtx := s.ctxManager.NewDBContext(ctx)
 
-	totalSides, err := s.sideRepository.TotalSides(dbCtx)
+	metadata, err := s.offsetMetadata(dbCtx, page)
 	if err != nil {
 		return nil, err
-	}
-	metadata := &pagination.OffsetBasedMetadata{
-		Page:      page.Page,
-		PerPage:   page.Limit,
-		TotalPage: totalSides / page.Limit,
 	}
 
 	sides, err := s.sideRepository.FindManyWithOffsetAndLimit(dbCtx, page.Offset(), page.Limit)
@@ -99,14 +94,9 @@ func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.Of
 func (s *SideServiceImpl[T]) GetPopularSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error) {
 	dbCtx := s.ctxManager.NewDBContext(ctx)
 
-	totalSides, err := s.sideRepository.TotalSides(dbCtx)
+	metadata, err := s.offsetMetadata(dbCtx, page)
 	if err != nil {
 		return nil, err
-	}
-	metadata := &pagination.OffsetBasedMetadata{
-		Page:      page.Page,
-		PerPage:   page.Limit,
-		TotalPage: totalSides / page.Limit,
 	}
 
 	sides, err := s.sideRepository.FindOffsetLimitedWithLargestMemberships(dbCtx, page.Offset(), page.Limit)
@@ -159,14 +149,9 @@ func (s *SideServiceImpl[T]) GetJoinedSides(ctx *auth.AuthContext, page *paginat
 
 	dbCtx := s.ctxManager.NewDBContext(ctx)
 
-	totalSides, err := s.sideRepository.TotalSides(dbCtx)
+	metadata, err := s.offsetMetadata(dbCtx, page)
 	if err != nil {
 		return nil, err
-	}
-	metadata := &pagination.OffsetBasedMetadata{
-		Page:      page.Page,
-		PerPage:   page.Limit,
-		TotalPage: totalSides / page.Limit,
 	}
 
 	memberships, err := s.membershipRepository.FindOffsetLimitedByMemberID(dbCtx, ctx.Credential.ID, page.Offset(), page.Limit)
@@ -204,6 +189,15 @@ func (s *SideServiceImpl[T]) GetJoinedSides(ctx *auth.AuthContext, page *paginat
 	}
 
 	return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
+}
+
+func (s *SideServiceImpl[T]) offsetMetadata(dbCtx db.DBContext[T], page *pagination.OffsetBased) (*pagination.OffsetBasedMetadata, error) {
+	totalSides, err := s.sideRepository.TotalSides(dbCtx)
+	if err != nil {
+		return nil, err
+	}
+	totalPage := (totalSides + page.Limit - 1) / page.Limit
+	return &pagination.OffsetBasedMetadata{Page: page.Page, PerPage: page.Limit, TotalPage: totalPage}, nil
 }
 
 func (s *SideServiceImpl[T]) CreateSide(ctx *auth.AuthContext, req *dto.CreateSideRequest) (*dto.CreateSideResponse, error) {

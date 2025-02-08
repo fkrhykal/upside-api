@@ -9,6 +9,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Summary		Get Sides
+// @Tags		Sides
+// @Produce		json
+// @Router		/sides [get]
+// @Param		filter query string false "side filter e.g. 'popular'"
+// @Param		limit query integer false "number sides per page"
+// @Param		page query integer false "number of page"
+// @Security	BearerAuth
+// @Success		200 {object} response.Success[dto.GetSidesResponse]
+// @Failure		500 {object} response.Failure[string]
 func GetSidesHandler(logger log.Logger, sideService service.SideService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authCtx := auth.FromFiberCtx(c)

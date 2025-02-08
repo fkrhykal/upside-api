@@ -80,6 +80,13 @@ definitions:
       data:
         $ref: '#/definitions/dto.CreateSideResponse'
     type: object
+  Success-dto_GetSidesResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.GetSidesResponse'
+    type: object
   Success-dto_UserDetail:
     properties:
       code:
@@ -90,10 +97,15 @@ definitions:
   dto.CreateSideRequest:
     properties:
       description:
+        maxLength: 1000
         type: string
       name:
+        maxLength: 32
+        minLength: 4
         type: string
       nick:
+        maxLength: 24
+        minLength: 4
         type: string
     required:
     - description
@@ -105,12 +117,48 @@ definitions:
       id:
         type: string
     type: object
+  dto.GetSidesResponse:
+    properties:
+      metadata:
+        $ref: '#/definitions/pagination.OffsetBasedMetadata'
+      sides:
+        items:
+          $ref: '#/definitions/dto.Side'
+        type: array
+    type: object
+  dto.MembershipDetail:
+    properties:
+      id:
+        type: string
+      role:
+        type: string
+    type: object
+  dto.Side:
+    properties:
+      id:
+        type: string
+      membershipDetail:
+        $ref: '#/definitions/dto.MembershipDetail'
+      name:
+        type: string
+      nick:
+        type: string
+    type: object
   dto.UserDetail:
     properties:
       id:
         type: string
       username:
         type: string
+    type: object
+  pagination.OffsetBasedMetadata:
+    properties:
+      page:
+        type: integer
+      perPage:
+        type: integer
+      totalPage:
+        type: integer
     type: object
 info:
   contact: {}
@@ -177,6 +225,36 @@ paths:
       tags:
       - Accounts
   /sides:
+    get:
+      parameters:
+      - description: side filter e.g. 'popular'
+        in: query
+        name: filter
+        type: string
+      - description: number sides per page
+        in: query
+        name: limit
+        type: integer
+      - description: number of page
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Success-dto_GetSidesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Failure-string'
+      security:
+      - BearerAuth: []
+      summary: Get Sides
+      tags:
+      - Sides
     post:
       parameters:
       - description: Request body for create side

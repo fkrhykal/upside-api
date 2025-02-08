@@ -7,7 +7,7 @@ type OffsetBased struct {
 
 func (o *OffsetBased) Offset() int {
 	if o.Page > 1 {
-		return o.Page * o.Limit
+		return (o.Page - 1) * o.Limit
 	}
 	return 0
 }
