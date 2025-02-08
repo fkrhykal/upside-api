@@ -11,3 +11,7 @@ type Side struct {
 	Description string
 	CreatedAt   uint64
 }
+
+type Sides []*Side
+
+var EmptySides = make(Sides, 0)

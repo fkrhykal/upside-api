@@ -26,11 +26,7 @@ func CreateSideHandler(logger log.Logger, sideService service.SideService) fiber
 			return err
 		}
 
-		logger.Debug(req)
-
-		req.FounderID = auth.FromCtx(c).GetCredential().ID
-
-		res, err := sideService.CreateSide(c.UserContext(), req)
+		res, err := sideService.CreateSide(auth.FromFiberCtx(c), req)
 		if err != nil {
 			return err
 		}

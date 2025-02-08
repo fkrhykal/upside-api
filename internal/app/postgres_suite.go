@@ -48,24 +48,17 @@ func (s *PostgresContainerSuite) setupContainer() {
 		tc.WithLogger(tc.TestLogger(s.T())),
 		postgres.BasicWaitStrategies(),
 	)
-	if err != nil {
-		s.FailNow("", err)
-	}
+	s.Nil(err)
 
 	con, err := container.ConnectionString(s.ctx)
-	if err != nil {
-		s.FailNow("", err)
-	}
+	s.Nil(err)
 
-	if _, err := fmt.Sscanf(con, "postgres://upside:password@localhost:%d/test?",
-		&s.config.Port); err != nil {
-		s.FailNow("", err)
-	}
+	_, err = fmt.Sscanf(con, "postgres://upside:password@localhost:%d/test?",
+		&s.config.Port)
+	s.Nil(err)
 
 	s.container = container
-	if err != nil {
-		s.FailNow("", err)
-	}
+
 }
 
 func (s *PostgresContainerSuite) TearDownSuite() {

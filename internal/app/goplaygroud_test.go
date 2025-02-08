@@ -8,8 +8,8 @@ import (
 )
 
 type Data struct {
-	Amount  int    `validate:"min=12" name:"amount"`
-	Message string `validate:"required,len=10" name:"message"`
+	Amount  int    `validate:"min=12" json:"amount"`
+	Message string `validate:"required,len=10" json:"message"`
 }
 
 func TestGoPlaygroundValidator(t *testing.T) {

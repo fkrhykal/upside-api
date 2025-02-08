@@ -10,8 +10,11 @@ import (
 
 func SideRouter(logger log.Logger, sideService service.SideService, authProvider auth.AuthProvider) func(*fiber.App) {
 	return func(app *fiber.App) {
-		app.Route("/sides", func(router fiber.Router) {
-			router.Post("/", auth.AuthMiddleware(authProvider), handler.CreateSideHandler(logger, sideService))
-		})
+		router := app.Route("/sides", func(router fiber.Router) {})
+
+		router.Use(auth.CredentialParserMiddleware(authProvider))
+
+		router.Get("/", handler.GetSidesHandler(logger, sideService))
+		router.Post("/", handler.CreateSideHandler(logger, sideService))
 	}
 }

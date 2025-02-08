@@ -44,6 +44,93 @@ func (mr *PgMembershipRepositorySuite) TestSaveMembership() {
 	mr.EqualValues(membership.ID, id)
 }
 
+func (mr *PgMembershipRepositorySuite) TestGetJoinedSides() {
+	ctx := context.Background()
+	dbCtx := mr.ctxManager.NewDBContext(ctx)
+
+	memberId := mr.saveUser(dbCtx)
+	sideId := mr.saveMultipleSide(dbCtx, 2)
+
+	membershipRegistry := make([]*entity.Membership, 100)
+
+	for i := range 50 {
+		membership := &entity.Membership{
+			ID:     uuid.New(),
+			Member: memberId,
+			Side:   sideId[0],
+			Role:   entity.FOUNDER,
+		}
+
+		err := mr.membershipRepository.Save(dbCtx, membership)
+		mr.Nil(err)
+
+		membershipRegistry[i] = membership
+	}
+
+	for i := range 50 {
+		membership := &entity.Membership{
+			ID:     uuid.New(),
+			Member: memberId,
+			Side:   sideId[1],
+			Role:   entity.FOUNDER,
+		}
+
+		err := mr.membershipRepository.Save(dbCtx, membership)
+		mr.Nil(err)
+
+		membershipRegistry[i+50] = membership
+	}
+
+	memberships, err := mr.membershipRepository.FindManyByMemberID(dbCtx, memberId)
+	mr.Nil(err)
+	for i, membership := range memberships {
+		mr.EqualValues(membershipRegistry[i], membership)
+	}
+}
+
+func (mr *PgMembershipRepositorySuite) TestFindManyBySideIDsAndMemberID() {
+	ctx := context.Background()
+	dbCtx := mr.ctxManager.NewDBContext(ctx)
+
+	sideIDs := mr.saveMultipleSide(dbCtx, 10)
+	userID := mr.saveUser(dbCtx)
+
+	for _, sideID := range sideIDs {
+		membership := &entity.Membership{
+			ID:     uuid.New(),
+			Member: userID,
+			Side:   sideID,
+			Role:   entity.MEMBER,
+		}
+		err := mr.membershipRepository.Save(dbCtx, membership)
+		mr.Nil(err)
+	}
+
+	sides, err := mr.membershipRepository.FindManyBySideIDsAndMemberID(dbCtx, sideIDs, userID)
+	mr.Nil(err)
+	mr.Len(sides, 10)
+}
+
+func (mr *PgMembershipRepositorySuite) saveMultipleSide(dbCtx db.DBContext[db.SqlExecutor], amount int) uuid.UUIDs {
+	IDs := make(uuid.UUIDs, amount)
+	query := `INSERT INTO sides(id, nick, name, description, created_at) VALUES($1, $2, $3, $4, $5)`
+	stmt, err := dbCtx.Executor().PrepareContext(dbCtx, query)
+	mr.Nil(err)
+
+	for i := range amount {
+		id := uuid.New()
+		nick := faker.Username()
+		name := faker.Name()
+		description := faker.Sentence()
+		createdAt := time.Now().UnixMilli()
+		_, err := stmt.ExecContext(dbCtx, id, nick, name, description, createdAt)
+		mr.Nil(err)
+		IDs[i] = id
+	}
+
+	return IDs
+}
+
 func (mr *PgMembershipRepositorySuite) saveSide(dbCtx db.DBContext[db.SqlExecutor]) uuid.UUID {
 	id := uuid.New()
 	nick := faker.Username()
