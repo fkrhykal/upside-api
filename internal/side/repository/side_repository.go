@@ -14,4 +14,5 @@ type SideRepository[T any] interface {
 
 	FindOffsetLimitedWithLargestMemberships(ctx db.DBContext[T], offset int, limit int) (entity.Sides, error)
 	FindManyWithOffsetAndLimit(ctx db.DBContext[T], offset int, limit int) (entity.Sides, error)
+	TotalSides(ctx db.DBContext[T]) (int, error)
 }

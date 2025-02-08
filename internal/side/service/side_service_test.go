@@ -58,17 +58,19 @@ func (s *SideServiceSuite[T]) TestGetJoinedSides() {
 		s.Nil(err)
 	}
 
-	sides, err := s.SideService.GetJoinedSides(authCtx, &pagination.OffsetBased{Page: 1, Limit: 2})
+	res, err := s.SideService.GetJoinedSides(authCtx, &pagination.OffsetBased{Page: 1, Limit: 2})
 	s.Nil(err)
-	s.Len(sides, 2)
+	s.Len(res.Sides, 2)
 
-	offsetSides, err := s.SideService.GetJoinedSides(authCtx, &pagination.OffsetBased{Page: 2, Limit: 2})
+	offsetRes, err := s.SideService.GetJoinedSides(authCtx, &pagination.OffsetBased{Page: 2, Limit: 2})
 	s.Nil(err)
-	s.Len(offsetSides, 2)
+	s.Len(offsetRes.Sides, 2)
 
 	for i := range 2 {
-		s.NotNil(sides[i].MembershipDetail)
-		s.NotNil(offsetSides[i].MembershipDetail)
+		s.NotNil(res.Sides[i].MembershipDetail)
+		s.NotNil(offsetRes.Sides[i].MembershipDetail)
+		s.EqualValues(50, res.Metadata.TotalPage)
+		s.EqualValues(50, offsetRes.Metadata.TotalPage)
 	}
 }
 
@@ -88,18 +90,16 @@ func (s *SideServiceSuite[T]) TestGetPopularSides() {
 		s.Nil(err)
 	}
 
-	sides, err := s.SideService.GetPopularSides(authCtx, &pagination.OffsetBased{Page: 1, Limit: 2})
+	res, err := s.SideService.GetPopularSides(authCtx, &pagination.OffsetBased{Page: 1, Limit: 2})
 	s.Nil(err)
-	s.Len(sides, 2)
+	s.Len(res.Sides, 2)
 
-	offsetSides, err := s.SideService.GetPopularSides(authCtx, &pagination.OffsetBased{Page: 2, Limit: 2})
+	offsetRes, err := s.SideService.GetPopularSides(authCtx, &pagination.OffsetBased{Page: 2, Limit: 2})
 	s.Nil(err)
-	s.Len(offsetSides, 2)
+	s.Len(offsetRes.Sides, 2)
 
-	for i := range 2 {
-		s.NotNil(sides[i].MembershipDetail)
-		s.NotNil(offsetSides[i].MembershipDetail)
-	}
+	s.EqualValues(50, res.Metadata.TotalPage)
+	s.EqualValues(50, offsetRes.Metadata.TotalPage)
 }
 
 func (s *SideServiceSuite[T]) TestGetSides() {
@@ -118,18 +118,17 @@ func (s *SideServiceSuite[T]) TestGetSides() {
 		s.Nil(err)
 	}
 
-	sides, err := s.SideService.GetSides(authCtx, &pagination.OffsetBased{Page: 1, Limit: 2})
+	res, err := s.SideService.GetSides(authCtx, &pagination.OffsetBased{Page: 1, Limit: 2})
 	s.Nil(err)
-	s.Len(sides, 2)
+	s.Len(res.Sides, 2)
 
-	offsetSides, err := s.SideService.GetSides(authCtx, &pagination.OffsetBased{Page: 2, Limit: 2})
+	offsetRes, err := s.SideService.GetSides(authCtx, &pagination.OffsetBased{Page: 2, Limit: 2})
 	s.Nil(err)
-	s.Len(offsetSides, 2)
+	s.Len(offsetRes.Sides, 2)
 
-	for i := range 2 {
-		s.NotNil(sides[i].MembershipDetail)
-		s.NotNil(offsetSides[i].MembershipDetail)
-	}
+	s.EqualValues(50, res.Metadata.TotalPage)
+	s.EqualValues(50, offsetRes.Metadata.TotalPage)
+
 }
 
 func (s *SideServiceSuite[T]) saveUser() uuid.UUID {

@@ -33,7 +33,7 @@ func (s *PostgresContainerSuite) SetupSuite() {
 	s.setupContainer()
 
 	pg, err := NewPostgresDB(s.config)
-	s.Nil(err, "Failed to create PostgresDB:", err)
+	s.Require().NoError(err)
 	s.DB = pg
 }
 
@@ -48,17 +48,24 @@ func (s *PostgresContainerSuite) setupContainer() {
 		tc.WithLogger(tc.TestLogger(s.T())),
 		postgres.BasicWaitStrategies(),
 	)
-	s.Nil(err)
+	s.Require().NoError(err)
 
 	con, err := container.ConnectionString(s.ctx)
-	s.Nil(err)
+	s.Require().NoError(err)
 
 	_, err = fmt.Sscanf(con, "postgres://upside:password@localhost:%d/test?",
 		&s.config.Port)
-	s.Nil(err)
+	s.Require().NoError(err)
 
 	s.container = container
 
+}
+
+func (s *PostgresContainerSuite) AfterTest(_, _ string) {
+	query := `TRUNCATE TABLE memberships CASCADE; TRUNCATE TABLE sides CASCADE; TRUNCATE TABLE users CASCADE;`
+	result, err := s.DB.Exec(query)
+	s.T().Log(result)
+	s.Require().NoError(err)
 }
 
 func (s *PostgresContainerSuite) TearDownSuite() {

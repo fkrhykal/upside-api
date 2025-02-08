@@ -39,12 +39,22 @@ func NewSideServiceImpl[T any](
 	}
 }
 
-func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (dto.Sides, error) {
+func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error) {
 	dbCtx := s.ctxManager.NewDBContext(ctx)
+
+	totalSides, err := s.sideRepository.TotalSides(dbCtx)
+	if err != nil {
+		return nil, err
+	}
+	metadata := &pagination.OffsetBasedMetadata{
+		Page:      page.Page,
+		PerPage:   page.Limit,
+		TotalPage: totalSides / page.Limit,
+	}
 
 	sides, err := s.sideRepository.FindManyWithOffsetAndLimit(dbCtx, page.Offset(), page.Limit)
 	if err != nil {
-		return dto.EmptySides, err
+		return nil, err
 	}
 
 	if !ctx.Authenticated() {
@@ -52,7 +62,7 @@ func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.Of
 		for i, side := range sides {
 			sidesDto[i] = &dto.Side{ID: side.ID, Nick: side.Nick, Name: side.Description}
 		}
-		return sidesDto, nil
+		return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
 	}
 	sideIDs := make(uuid.UUIDs, len(sides))
 
@@ -62,7 +72,7 @@ func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.Of
 
 	memberships, err := s.membershipRepository.FindManyBySideIDsAndMemberID(dbCtx, sideIDs, ctx.Credential.ID)
 	if err != nil {
-		return dto.EmptySides, err
+		return nil, err
 	}
 
 	membershipRegistry := make(map[uuid.UUID]*entity.Membership, len(memberships))
@@ -83,22 +93,32 @@ func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.Of
 		}
 		sidesDto[i] = sideDto
 	}
-	return sidesDto, nil
+	return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
 }
 
-func (s *SideServiceImpl[T]) GetPopularSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (dto.Sides, error) {
+func (s *SideServiceImpl[T]) GetPopularSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error) {
 	dbCtx := s.ctxManager.NewDBContext(ctx)
+
+	totalSides, err := s.sideRepository.TotalSides(dbCtx)
+	if err != nil {
+		return nil, err
+	}
+	metadata := &pagination.OffsetBasedMetadata{
+		Page:      page.Page,
+		PerPage:   page.Limit,
+		TotalPage: totalSides / page.Limit,
+	}
 
 	sides, err := s.sideRepository.FindOffsetLimitedWithLargestMemberships(dbCtx, page.Offset(), page.Limit)
 	if err != nil {
-		return make(dto.Sides, 0), nil
+		return nil, err
 	}
 	if !ctx.Authenticated() {
 		sidesDto := make(dto.Sides, len(sides))
 		for i, side := range sides {
 			sidesDto[i] = &dto.Side{ID: side.ID, Nick: side.Nick, Name: side.Description}
 		}
-		return sidesDto, nil
+		return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
 	}
 	sideIDs := make(uuid.UUIDs, len(sides))
 
@@ -108,7 +128,7 @@ func (s *SideServiceImpl[T]) GetPopularSides(ctx *auth.AuthContext, page *pagina
 
 	memberships, err := s.membershipRepository.FindManyBySideIDsAndMemberID(dbCtx, sideIDs, ctx.Credential.ID)
 	if err != nil {
-		return make(dto.Sides, 0), err
+		return nil, err
 	}
 
 	membershipRegistry := make(map[uuid.UUID]*entity.Membership, len(memberships))
@@ -129,19 +149,29 @@ func (s *SideServiceImpl[T]) GetPopularSides(ctx *auth.AuthContext, page *pagina
 		}
 		sidesDto[i] = sideDto
 	}
-	return sidesDto, nil
+	return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
 }
 
-func (s *SideServiceImpl[T]) GetJoinedSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (dto.Sides, error) {
+func (s *SideServiceImpl[T]) GetJoinedSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error) {
 	if !ctx.Authenticated() {
-		return dto.EmptySides, nil
+		return nil, exception.ErrAuthentication
 	}
 
 	dbCtx := s.ctxManager.NewDBContext(ctx)
 
+	totalSides, err := s.sideRepository.TotalSides(dbCtx)
+	if err != nil {
+		return nil, err
+	}
+	metadata := &pagination.OffsetBasedMetadata{
+		Page:      page.Page,
+		PerPage:   page.Limit,
+		TotalPage: totalSides / page.Limit,
+	}
+
 	memberships, err := s.membershipRepository.FindOffsetLimitedByMemberID(dbCtx, ctx.Credential.ID, page.Offset(), page.Limit)
 	if err != nil {
-		return dto.EmptySides, err
+		return nil, err
 	}
 
 	sideIDs := make([]uuid.UUID, len(memberships))
@@ -154,7 +184,7 @@ func (s *SideServiceImpl[T]) GetJoinedSides(ctx *auth.AuthContext, page *paginat
 
 	sides, err := s.sideRepository.FindManyIn(dbCtx, sideIDs)
 	if err != nil {
-		return dto.EmptySides, err
+		return nil, err
 	}
 
 	sidesDto := make(dto.Sides, len(sides))
@@ -173,7 +203,7 @@ func (s *SideServiceImpl[T]) GetJoinedSides(ctx *auth.AuthContext, page *paginat
 		}
 	}
 
-	return sidesDto, nil
+	return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
 }
 
 func (s *SideServiceImpl[T]) CreateSide(ctx *auth.AuthContext, req *dto.CreateSideRequest) (*dto.CreateSideResponse, error) {

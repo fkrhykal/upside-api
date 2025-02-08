@@ -150,8 +150,7 @@ func (p *PgSideRepository) FindManyWithOffsetAndLimit(ctx db.DBContext[db.SqlExe
 }
 
 func (p *PgSideRepository) FindOffsetLimitedWithLargestMemberships(ctx db.DBContext[db.SqlExecutor], offset int, limit int) (entity.Sides, error) {
-	query := `SELECT s.id, s.nick, s.name, s.description, s.created_at, 
-    (SELECT COUNT(*) FROM memberships m WHERE m.side_id = s.id) AS number_of_memberships
+	query := `SELECT s.id, s.nick, s.name, s.description, s.created_at, (SELECT COUNT(*) FROM memberships m WHERE m.side_id = s.id) AS number_of_memberships
 	FROM sides AS s
 	ORDER BY number_of_memberships DESC
 	LIMIT $1
@@ -180,4 +179,13 @@ func (p *PgSideRepository) FindOffsetLimitedWithLargestMemberships(ctx db.DBCont
 	}
 
 	return sides, nil
+}
+
+func (p *PgSideRepository) TotalSides(ctx db.DBContext[db.SqlExecutor]) (int, error) {
+	query := `SELECT COUNT(*) FROM sides`
+	var count int
+	if err := ctx.Executor().QueryRowContext(ctx, query).Scan(&count); err != nil {
+		return count, err
+	}
+	return count, nil
 }

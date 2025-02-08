@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"github.com/fkrhykal/upside-api/internal/shared/pagination"
 	"github.com/google/uuid"
 )
 
@@ -19,3 +20,8 @@ type Side struct {
 type Sides []*Side
 
 var EmptySides = make(Sides, 0)
+
+type GetSidesResponse struct {
+	Sides    Sides                           `json:"sides"`
+	Metadata *pagination.OffsetBasedMetadata `json:"metadata"`
+}

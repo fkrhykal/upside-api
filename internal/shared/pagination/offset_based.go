@@ -26,3 +26,9 @@ func SafeOffsetBased(page int, limit int) *OffsetBased {
 		Limit: validLimit,
 	}
 }
+
+type OffsetBasedMetadata struct {
+	Page      int `json:"page"`
+	PerPage   int `json:"perPage"`
+	TotalPage int `json:"totalPage"`
+}
