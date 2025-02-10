@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func AuthRouter(logger log.Logger, authService service.AuthService) func(*fiber.App) {
-	return func(app *fiber.App) {
+func AuthRouter(logger log.Logger, authService service.AuthService) func(fiber.Router) {
+	return func(app fiber.Router) {
 		app.Route("/auth", func(router fiber.Router) {
 			router.Post("/_sign-up", handler.SignUpHandler(logger, authService))
 			router.Post("/_sign-in", handler.SignInHandler(logger, authService))

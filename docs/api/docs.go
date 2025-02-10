@@ -200,6 +200,51 @@ const docTemplate = `{
                 }
             }
         },
+        "/sides/{sideID}/_join": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sides"
+                ],
+                "summary": "Join Side",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "side id",
+                        "name": "sideID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Success-dto_JoinSideResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Failure-string"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "get": {
                 "produces": [
@@ -373,6 +418,17 @@ const docTemplate = `{
                 }
             }
         },
+        "Success-dto_JoinSideResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.JoinSideResponse"
+                }
+            }
+        },
         "Success-dto_UserDetail": {
             "type": "object",
             "properties": {
@@ -427,6 +483,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/dto.Side"
                     }
+                }
+            }
+        },
+        "dto.JoinSideResponse": {
+            "type": "object",
+            "properties": {
+                "membershipID": {
+                    "type": "string"
+                },
+                "sideID": {
+                    "type": "string"
                 }
             }
         },

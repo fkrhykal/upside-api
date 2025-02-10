@@ -126,16 +126,42 @@ func (s *SideServiceSuite[T]) TestGetSides() {
 	s.Nil(err)
 	s.Len(offsetRes.Sides, 2)
 
-	s.EqualValues(50, res.Metadata.TotalPage)
-	s.EqualValues(50, offsetRes.Metadata.TotalPage)
+	s.Require().EqualValues(50, res.Metadata.TotalPage)
+	s.Require().EqualValues(50, offsetRes.Metadata.TotalPage)
 
+}
+
+func (s *SideServiceSuite[T]) TestJoinSide() {
+	founderID := s.saveUser()
+	ctx := context.Background()
+	founderAuthCtx := auth.NewAuthContext(ctx, &auth.UserCredential{ID: founderID})
+
+	createSideRequest := &dto.CreateSideRequest{
+		Nick:        faker.Username(),
+		Name:        faker.Name(),
+		Description: faker.Sentence(),
+	}
+
+	createSideResponse, err := s.CreateSide(founderAuthCtx, createSideRequest)
+	s.Require().NoError(err)
+
+	memberID := s.saveUser()
+	memberAuthCtx := auth.NewAuthContext(ctx, &auth.UserCredential{ID: memberID})
+
+	joinSideResponse, err := s.JoinSide(memberAuthCtx, &dto.JoinSideRequest{
+		SideID: createSideResponse.ID,
+	})
+
+	s.Require().NoError(err)
+	s.Require().NotNil(joinSideResponse)
+	s.Require().EqualValues(createSideResponse.ID, joinSideResponse.SideID)
 }
 
 func (s *SideServiceSuite[T]) saveUser() uuid.UUID {
 	userID := uuid.New()
 	query := `INSERT INTO users(id, username, password) VALUES($1, $2, $3)`
 	_, err := s.DB.Exec(query, userID, faker.Username(), faker.Password())
-	s.Nil(err)
+	s.Require().NoError(err)
 	return userID
 }
 

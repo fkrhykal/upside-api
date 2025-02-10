@@ -34,5 +34,5 @@ func (us *UserServiceImpl[T]) GetUserDetail(ctx context.Context, id uuid.UUID) (
 	if user != nil {
 		return &dto.UserDetail{ID: user.ID, Username: user.Username}, nil
 	}
-	return nil, exception.UserNotFound
+	return nil, exception.ErrUserNotFound
 }

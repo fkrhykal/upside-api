@@ -39,6 +39,39 @@ func NewSideServiceImpl[T any](
 	}
 }
 
+func (s *SideServiceImpl[T]) JoinSide(ctx *auth.AuthContext, req *dto.JoinSideRequest) (*dto.JoinSideResponse, error) {
+	dbCtx := s.ctxManager.NewDBContext(ctx)
+
+	side, err := s.sideRepository.FindById(dbCtx, req.SideID)
+	if err != nil {
+		return nil, err
+	}
+	if side == nil {
+		return nil, exception.ErrSideNotFound
+	}
+
+	membership, err := s.membershipRepository.FindBySideIDAndMemberID(dbCtx, ctx.Credential.ID, side.ID)
+	if err != nil {
+		return nil, err
+	}
+	if membership != nil {
+		return nil, exception.ErrAlreadyJoinSide
+	}
+
+	membership = &entity.Membership{
+		ID:     uuid.New(),
+		Member: ctx.Credential.ID,
+		Side:   side.ID,
+		Role:   entity.MEMBER,
+	}
+
+	if err := s.membershipRepository.Save(dbCtx, membership); err != nil {
+		return nil, err
+	}
+
+	return &dto.JoinSideResponse{SideID: side.ID, MembershipID: membership.ID}, nil
+}
+
 func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error) {
 	dbCtx := s.ctxManager.NewDBContext(ctx)
 

@@ -11,4 +11,6 @@ type SideService interface {
 	GetJoinedSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error)
 	GetPopularSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error)
 	GetSides(ctx *auth.AuthContext, page *pagination.OffsetBased) (*dto.GetSidesResponse, error)
+
+	JoinSide(ctx *auth.AuthContext, req *dto.JoinSideRequest) (*dto.JoinSideResponse, error)
 }

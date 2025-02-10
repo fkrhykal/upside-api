@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"database/sql"
+	"errors"
+
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
 	"github.com/fkrhykal/upside-api/internal/side/entity"
@@ -92,4 +95,19 @@ func (m *PgMembershipRepository) FindOffsetLimitedByMemberID(ctx db.DBContext[db
 		return memberships, err
 	}
 	return memberships, nil
+}
+
+func (m *PgMembershipRepository) FindBySideIDAndMemberID(ctx db.DBContext[db.SqlExecutor], memberID uuid.UUID, sideID uuid.UUID) (*entity.Membership, error) {
+	query := `SELECT id, member_id, side_id, role FROM memberships WHERE member_id = $1 AND side_id = $2`
+	membership := new((entity.Membership))
+	err := ctx.Executor().
+		QueryRowContext(ctx, query, memberID, sideID).
+		Scan(&membership.ID, &membership.Member, &membership.Side, &membership.Role)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return membership, nil
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func UserRouter(logger log.Logger, userService service.UserService) func(*fiber.App) {
-	return func(app *fiber.App) {
+func UserRouter(logger log.Logger, userService service.UserService) func(fiber.Router) {
+	return func(app fiber.Router) {
 		app.Route("/users", func(router fiber.Router) {
 			router.Get("/:id", handler.GetUserDetailHandler(logger, userService))
 		})

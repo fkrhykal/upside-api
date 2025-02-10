@@ -3,6 +3,7 @@ package auth
 import (
 	"strings"
 
+	"github.com/fkrhykal/upside-api/internal/shared/response"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -30,7 +31,7 @@ func NewFiberCredentialRegistry(c *fiber.Ctx) *FiberCredentialRegistry {
 	return &FiberCredentialRegistry{Ctx: c}
 }
 
-func CredentialParserMiddleware(authProvider AuthProvider) fiber.Handler {
+func JwtBearerParserMiddleware(authProvider AuthProvider) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		registry := &FiberCredentialRegistry{Ctx: c}
 		authorizationHeader := c.Get("Authorization")
@@ -45,4 +46,13 @@ func CredentialParserMiddleware(authProvider AuthProvider) fiber.Handler {
 		registry.SetCredential(credential)
 		return registry.Next()
 	}
+}
+
+// Check for credential, return 401 if not exist
+func AuthenticationMiddleware(c *fiber.Ctx) error {
+	authCtx := FromFiberCtx(c)
+	if !authCtx.Authenticated() {
+		return response.FailureFromFiber(c, fiber.ErrUnauthorized)
+	}
+	return c.Next()
 }

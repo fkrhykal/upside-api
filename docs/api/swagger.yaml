@@ -87,6 +87,13 @@ definitions:
       data:
         $ref: '#/definitions/dto.GetSidesResponse'
     type: object
+  Success-dto_JoinSideResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.JoinSideResponse'
+    type: object
   Success-dto_UserDetail:
     properties:
       code:
@@ -125,6 +132,13 @@ definitions:
         items:
           $ref: '#/definitions/dto.Side'
         type: array
+    type: object
+  dto.JoinSideResponse:
+    properties:
+      membershipID:
+        type: string
+      sideID:
+        type: string
     type: object
   dto.MembershipDetail:
     properties:
@@ -281,6 +295,34 @@ paths:
       security:
       - BearerAuth: []
       summary: Create Side
+      tags:
+      - Sides
+  /sides/{sideID}/_join:
+    post:
+      parameters:
+      - description: side id
+        in: path
+        name: sideID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Success-dto_JoinSideResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Failure-string'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Failure-string'
+      security:
+      - BearerAuth: []
+      summary: Join Side
       tags:
       - Sides
   /users/{id}:

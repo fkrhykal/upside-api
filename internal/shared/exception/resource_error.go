@@ -11,5 +11,6 @@ func (nf *ResourceNotFoundError) Error() string {
 }
 
 var (
-	UserNotFound = &ResourceNotFoundError{ResourceName: "user"}
+	ErrUserNotFound = &ResourceNotFoundError{ResourceName: "user"}
+	ErrSideNotFound = &ResourceNotFoundError{ResourceName: "side"}
 )

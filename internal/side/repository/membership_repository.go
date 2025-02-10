@@ -12,4 +12,5 @@ type MembershipRepository[T any] interface {
 	FindManyBySideIDsAndMemberID(ctx db.DBContext[T], sideIDs uuid.UUIDs, memberID uuid.UUID) ([]*entity.Membership, error)
 
 	FindOffsetLimitedByMemberID(ctx db.DBContext[T], memberID uuid.UUID, offset int, limit int) (entity.Memberships, error)
+	FindBySideIDAndMemberID(ctx db.DBContext[T], memberID uuid.UUID, sideID uuid.UUID) (*entity.Membership, error)
 }

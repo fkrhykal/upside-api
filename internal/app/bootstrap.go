@@ -33,6 +33,7 @@ func Bootstrap(config *BootstrapConfig) {
 
 	sideRepository := sideRepositories.NewPgSideRepository(config.Logger)
 	membershipRepository := sideRepositories.NewPgMembershipRepository(config.Logger)
+	postRepository := sideRepositories.NewPgPostRepository(config.Logger)
 
 	authProvider := auth.NewJwtAuthProvider(config.Logger, config.JwtAuthConfig)
 
@@ -47,18 +48,25 @@ func Bootstrap(config *BootstrapConfig) {
 		sideRepository,
 		membershipRepository,
 	)
+	postService := sideServices.NewPostServiceImpl(
+		config.Validator,
+		ctxManager,
+		sideRepository,
+		membershipRepository,
+		postRepository,
+	)
 
 	setupRoutes(
 		config.Fiber,
 		accountRouters.AuthRouter(config.Logger, authService),
 		accountRouters.UserRouter(config.Logger, userService),
-		sideRouters.SideRouter(config.Logger, sideService, authProvider),
+		sideRouters.SideRouter(config.Logger, authProvider, sideService, postService),
 	)
-
 }
 
-func setupRoutes(app *fiber.App, routerProviders ...func(*fiber.App)) {
+func setupRoutes(app *fiber.App, routerProviders ...func(fiber.Router)) {
+	api := app.Group("/api/v1")
 	for _, routerProvider := range routerProviders {
-		routerProvider(app)
+		routerProvider(api)
 	}
 }

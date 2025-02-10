@@ -33,10 +33,10 @@ func SetupErrorHandler(logger log.Logger) fiber.ErrorHandler {
 			detail := err.(*validation.ValidationError).Detail
 			return response.FailureWithDetail(c, fiber.StatusBadRequest, detail)
 		case *exception.AuthenticationError:
-			logger.Debug(err)
 			return response.FailureFromFiber(c, fiber.ErrUnauthorized)
+		case *exception.AlreadyJoinSideError:
+			return response.FailureFromFiber(c, fiber.ErrConflict)
 		case *fiber.Error:
-			logger.Errorf("Fiber error: %+v", err)
 			return response.FailureFromFiber(c, err.(*fiber.Error))
 		case *json.UnmarshalTypeError:
 			detail := helpers.HandleUnmarshalTypeError(err.(*json.UnmarshalTypeError))
