@@ -49,6 +49,7 @@ func Bootstrap(config *BootstrapConfig) {
 		membershipRepository,
 	)
 	postService := sideServices.NewPostServiceImpl(
+		config.Logger,
 		config.Validator,
 		ctxManager,
 		sideRepository,
@@ -61,6 +62,7 @@ func Bootstrap(config *BootstrapConfig) {
 		accountRouters.AuthRouter(config.Logger, authService),
 		accountRouters.UserRouter(config.Logger, userService),
 		sideRouters.SideRouter(config.Logger, authProvider, sideService, postService),
+		sideRouters.PostRouter(config.Logger, authProvider, postService),
 	)
 }
 

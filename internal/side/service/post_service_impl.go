@@ -1,11 +1,13 @@
 package service
 
 import (
-	"time"
+	"errors"
 
 	"github.com/fkrhykal/upside-api/internal/shared/auth"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/exception"
+	"github.com/fkrhykal/upside-api/internal/shared/log"
+	"github.com/fkrhykal/upside-api/internal/shared/pagination"
 	"github.com/fkrhykal/upside-api/internal/shared/validation"
 	"github.com/fkrhykal/upside-api/internal/side/dto"
 	"github.com/fkrhykal/upside-api/internal/side/entity"
@@ -14,6 +16,7 @@ import (
 )
 
 type PostServiceImpl[T any] struct {
+	logger               log.Logger
 	validator            validation.Validator
 	ctxManager           db.CtxManager[T]
 	sideRepository       repository.SideRepository[T]
@@ -22,6 +25,7 @@ type PostServiceImpl[T any] struct {
 }
 
 func NewPostServiceImpl[T any](
+	logger log.Logger,
 	validator validation.Validator,
 	ctxManager db.CtxManager[T],
 	sideRepository repository.SideRepository[T],
@@ -29,6 +33,7 @@ func NewPostServiceImpl[T any](
 	postRepository repository.PostRepository[T],
 ) PostService {
 	return &PostServiceImpl[T]{
+		logger:               logger,
 		validator:            validator,
 		ctxManager:           ctxManager,
 		sideRepository:       sideRepository,
@@ -58,17 +63,104 @@ func (ps *PostServiceImpl[T]) CreatePost(ctx *auth.AuthContext, req *dto.CreateP
 		return nil, exception.ErrAuthorization
 	}
 
-	post := &entity.Post{
-		ID:        ulid.Make(),
-		Body:      req.Body,
-		CreatedAt: time.Now().UnixMilli(),
-		Author:    &entity.Author{ID: ctx.Credential.ID},
-		Side:      side,
-	}
+	post := entity.NewPost(req.Body, ctx.Credential.ID, side.ID)
 
 	if err := ps.postRepository.Save(dbCtx, post); err != nil {
 		return nil, err
 	}
 
 	return &dto.CreatePostResponse{ID: post.ID}, nil
+}
+
+func (ps *PostServiceImpl[T]) GetLatestPosts(ctx *auth.AuthContext, cursor pagination.ULIDCursor) (*dto.GetPostsResponse, error) {
+	dbCtx := ps.ctxManager.NewDBContext(ctx)
+	var nextCursor *pagination.NextULIDCursor
+	var prevCursor *pagination.PrevULIDCursor
+
+	if cursor.ID() == nil {
+		posts, err := ps.postRepository.FindManyWithULIDCursor(dbCtx, cursor)
+		if err != nil {
+			return nil, err
+		}
+		if len(posts) <= cursor.Limit() {
+			nextCursor = pagination.LimitNextULIDCursor(cursor.Limit())
+		} else {
+			var postID *ulid.ULID
+
+			if len(posts) < cursor.Limit()+1 {
+				postID = &posts.Last().ID
+			} else {
+				postID = &posts.At(posts.LastIndex() - 2).ID
+			}
+
+			nextCursor, err = pagination.NewNextULIDCursor(postID, cursor.Limit())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		prevCursor = pagination.LimitPrevULIDCursor(cursor.Limit())
+
+		return &dto.GetPostsResponse{
+			Posts:    dto.FromEntitiesToPosts(posts.Slice(0, cursor.Limit())),
+			Metadata: pagination.ULIDCursorMetadata(prevCursor, nextCursor),
+		}, nil
+	}
+
+	_, isNextCursor := cursor.(*pagination.NextULIDCursor)
+	if isNextCursor {
+		posts, err := ps.postRepository.FindManyWithULIDCursor(dbCtx, cursor)
+		if err != nil {
+			return nil, err
+		}
+		if len(posts) < cursor.Limit()+2 {
+			nextCursor = pagination.LimitNextULIDCursor(cursor.Limit())
+		} else {
+			nextCursor, err = pagination.NewNextULIDCursor(&posts.Penultimate().ID, cursor.Limit())
+			if err != nil {
+				return nil, err
+			}
+		}
+		prevCursor, err = pagination.NewPrevULIDCursor(cursor.ID(), cursor.Limit())
+		if err != nil {
+			return nil, err
+		}
+		return &dto.GetPostsResponse{
+			Posts:    dto.FromEntitiesToPosts(posts.Slice(1, cursor.Limit()+1)),
+			Metadata: pagination.ULIDCursorMetadata(prevCursor, nextCursor),
+		}, nil
+	}
+
+	_, isPrevCursor := cursor.(*pagination.PrevULIDCursor)
+	if isPrevCursor {
+		posts, err := ps.postRepository.FindManyWithULIDCursor(dbCtx, cursor)
+		if err != nil {
+			return nil, err
+		}
+		if len(posts) < cursor.Limit()+2 {
+			prevCursor = pagination.LimitPrevULIDCursor(cursor.Limit())
+		} else {
+			prevCursor, err = pagination.NewPrevULIDCursor(&posts.Second().ID, cursor.Limit())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		nextCursor, err = pagination.NewNextULIDCursor(cursor.ID(), cursor.Limit())
+		if err != nil {
+			return nil, err
+		}
+		var prevPosts entity.Posts
+		if len(posts) < cursor.Limit()+2 {
+			prevPosts = posts
+		} else {
+			prevPosts = posts[2:]
+		}
+		return &dto.GetPostsResponse{
+			Posts:    dto.FromEntitiesToPosts(prevPosts),
+			Metadata: pagination.ULIDCursorMetadata(prevCursor, nextCursor),
+		}, nil
+	}
+
+	return nil, errors.New("cursor is nil")
 }
