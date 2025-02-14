@@ -10,8 +10,10 @@ import (
 
 func PostRouter(logger log.Logger, authProvider auth.AuthProvider, postService service.PostService) func(fiber.Router) {
 	return func(app fiber.Router) {
-		router := app.Route("/posts", func(router fiber.Router) {})
-		router.Use(auth.JwtBearerParserMiddleware(authProvider))
-		router.Get("/", handler.GetPostsHandler(logger, postService))
+		app.Route("/posts", func(router fiber.Router) {
+			router.Use(auth.JwtBearerParserMiddleware(authProvider))
+
+			router.Get("/", handler.GetPostsHandler(logger, postService))
+		})
 	}
 }

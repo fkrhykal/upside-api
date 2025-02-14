@@ -25,12 +25,6 @@ func (n *NextULIDCursor) Limit() int {
 	return n.limit
 }
 
-func LimitNextULIDCursor(limit int) *NextULIDCursor {
-	return &NextULIDCursor{
-		limit: limit,
-	}
-}
-
 func NewNextULIDCursor(ID *ulid.ULID, limit int) (*NextULIDCursor, error) {
 	payload := &ULIDCursorPayload{
 		ID:        ID,

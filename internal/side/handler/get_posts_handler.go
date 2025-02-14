@@ -14,9 +14,17 @@ func GetPostsHandler(logger log.Logger, postService service.PostService) fiber.H
 		authCtx := auth.FromFiberCtx(c)
 		cursor := c.Query("cursor")
 		limit := c.QueryInt("limit")
+		filter := c.Query("filter")
 		ulidCursor, err := pagination.ParseULIDCursor(cursor, limit)
 		if err != nil {
 			return err
+		}
+		if filter == "subscribed" {
+			res, err := postService.GetSubscribedPosts(authCtx, ulidCursor)
+			if err != nil {
+				return err
+			}
+			return response.SuccessWithData(c, fiber.StatusOK, res)
 		}
 		res, err := postService.GetLatestPosts(authCtx, ulidCursor)
 		if err != nil {

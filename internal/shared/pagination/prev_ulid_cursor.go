@@ -25,11 +25,6 @@ func (p *PrevULIDCursor) Limit() int {
 	return p.limit
 }
 
-func LimitPrevULIDCursor(limit int) *PrevULIDCursor {
-	return &PrevULIDCursor{
-		limit: limit,
-	}
-}
 func NewPrevULIDCursor(ID *ulid.ULID, limit int) (*PrevULIDCursor, error) {
 	payload := &ULIDCursorPayload{
 		ID:        ID,

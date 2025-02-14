@@ -21,7 +21,7 @@ type Author struct {
 	Username string
 }
 
-func NewPost(body string, authorID uuid.UUID, sideID uuid.UUID) *Post {
+func CreatePost(body string, authorID uuid.UUID, sideID uuid.UUID) *Post {
 	return &Post{
 		ID:        ulid.Make(),
 		Body:      body,

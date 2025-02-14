@@ -62,7 +62,7 @@ func SetupPosts(ctx db.DBContext[db.SqlExecutor], s *suite.Suite, authorID uuid.
 	s.Require().NoError(err)
 
 	for i := range amount {
-		post := entity.NewPost(faker.Sentence(), authorID, sideID)
+		post := entity.CreatePost(faker.Sentence(), authorID, sideID)
 		_, err := stmt.ExecContext(ctx, post.ID.String(), post.Body, post.CreatedAt, post.UpdatedAt, post.Author.ID, post.Side.ID)
 		s.Require().NoError(err)
 		UUIDs[i] = post.ID

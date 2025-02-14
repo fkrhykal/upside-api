@@ -1,8 +1,6 @@
 package service
 
 import (
-	"errors"
-
 	"github.com/fkrhykal/upside-api/internal/shared/auth"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/exception"
@@ -12,7 +10,7 @@ import (
 	"github.com/fkrhykal/upside-api/internal/side/dto"
 	"github.com/fkrhykal/upside-api/internal/side/entity"
 	"github.com/fkrhykal/upside-api/internal/side/repository"
-	"github.com/oklog/ulid/v2"
+	"github.com/google/uuid"
 )
 
 type PostServiceImpl[T any] struct {
@@ -63,7 +61,7 @@ func (ps *PostServiceImpl[T]) CreatePost(ctx *auth.AuthContext, req *dto.CreateP
 		return nil, exception.ErrAuthorization
 	}
 
-	post := entity.NewPost(req.Body, ctx.Credential.ID, side.ID)
+	post := entity.CreatePost(req.Body, ctx.Credential.ID, side.ID)
 
 	if err := ps.postRepository.Save(dbCtx, post); err != nil {
 		return nil, err
@@ -74,93 +72,46 @@ func (ps *PostServiceImpl[T]) CreatePost(ctx *auth.AuthContext, req *dto.CreateP
 
 func (ps *PostServiceImpl[T]) GetLatestPosts(ctx *auth.AuthContext, cursor pagination.ULIDCursor) (*dto.GetPostsResponse, error) {
 	dbCtx := ps.ctxManager.NewDBContext(ctx)
-	var nextCursor *pagination.NextULIDCursor
-	var prevCursor *pagination.PrevULIDCursor
 
-	if cursor.ID() == nil {
-		posts, err := ps.postRepository.FindManyWithULIDCursor(dbCtx, cursor)
-		if err != nil {
-			return nil, err
-		}
-		if len(posts) <= cursor.Limit() {
-			nextCursor = pagination.LimitNextULIDCursor(cursor.Limit())
-		} else {
-			var postID *ulid.ULID
-
-			if len(posts) < cursor.Limit()+1 {
-				postID = &posts.Last().ID
-			} else {
-				postID = &posts.At(posts.LastIndex() - 2).ID
-			}
-
-			nextCursor, err = pagination.NewNextULIDCursor(postID, cursor.Limit())
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		prevCursor = pagination.LimitPrevULIDCursor(cursor.Limit())
-
-		return &dto.GetPostsResponse{
-			Posts:    dto.FromEntitiesToPosts(posts.Slice(0, cursor.Limit())),
-			Metadata: pagination.ULIDCursorMetadata(prevCursor, nextCursor),
-		}, nil
+	m, err := ps.postRepository.FindManyWithULIDCursor(dbCtx, cursor)
+	if err != nil {
+		return nil, err
 	}
 
-	_, isNextCursor := cursor.(*pagination.NextULIDCursor)
-	if isNextCursor {
-		posts, err := ps.postRepository.FindManyWithULIDCursor(dbCtx, cursor)
-		if err != nil {
-			return nil, err
-		}
-		if len(posts) < cursor.Limit()+2 {
-			nextCursor = pagination.LimitNextULIDCursor(cursor.Limit())
-		} else {
-			nextCursor, err = pagination.NewNextULIDCursor(&posts.Penultimate().ID, cursor.Limit())
-			if err != nil {
-				return nil, err
-			}
-		}
-		prevCursor, err = pagination.NewPrevULIDCursor(cursor.ID(), cursor.Limit())
-		if err != nil {
-			return nil, err
-		}
-		return &dto.GetPostsResponse{
-			Posts:    dto.FromEntitiesToPosts(posts.Slice(1, cursor.Limit()+1)),
-			Metadata: pagination.ULIDCursorMetadata(prevCursor, nextCursor),
-		}, nil
+	return &dto.GetPostsResponse{
+		Posts:    dto.MapPosts(m.Data),
+		Metadata: m.Metadata,
+	}, nil
+}
+
+func (ps *PostServiceImpl[T]) GetSubscribedPosts(ctx *auth.AuthContext, cursor pagination.ULIDCursor) (*dto.GetPostsResponse, error) {
+	if !ctx.Authenticated() {
+		ps.logger.Debugf("authenticated user: %s", ctx.Authenticated())
+		return &dto.GetPostsResponse{Posts: dto.EmptyPosts, Metadata: &pagination.CursorBasedMetadata{}}, nil
 	}
 
-	_, isPrevCursor := cursor.(*pagination.PrevULIDCursor)
-	if isPrevCursor {
-		posts, err := ps.postRepository.FindManyWithULIDCursor(dbCtx, cursor)
-		if err != nil {
-			return nil, err
-		}
-		if len(posts) < cursor.Limit()+2 {
-			prevCursor = pagination.LimitPrevULIDCursor(cursor.Limit())
-		} else {
-			prevCursor, err = pagination.NewPrevULIDCursor(&posts.Second().ID, cursor.Limit())
-			if err != nil {
-				return nil, err
-			}
-		}
+	dbCtx := ps.ctxManager.NewDBContext(ctx)
+	memberships, err := ps.membershipRepository.FindManyByMemberID(dbCtx, ctx.Credential.ID)
 
-		nextCursor, err = pagination.NewNextULIDCursor(cursor.ID(), cursor.Limit())
-		if err != nil {
-			return nil, err
-		}
-		var prevPosts entity.Posts
-		if len(posts) < cursor.Limit()+2 {
-			prevPosts = posts
-		} else {
-			prevPosts = posts[2:]
-		}
-		return &dto.GetPostsResponse{
-			Posts:    dto.FromEntitiesToPosts(prevPosts),
-			Metadata: pagination.ULIDCursorMetadata(prevCursor, nextCursor),
-		}, nil
+	if err != nil {
+		return nil, err
+	}
+	if len(memberships) == 0 {
+		return &dto.GetPostsResponse{Posts: dto.EmptyPosts, Metadata: &pagination.CursorBasedMetadata{}}, nil
 	}
 
-	return nil, errors.New("cursor is nil")
+	sideIDs := make([]uuid.UUID, len(memberships))
+	for i, membership := range memberships {
+		sideIDs[i] = membership.Side
+	}
+
+	m, err := ps.postRepository.FindManyWithULIDCursorInSides(dbCtx, cursor, sideIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.GetPostsResponse{
+		Posts:    dto.MapPosts(m.Data),
+		Metadata: m.Metadata,
+	}, nil
 }

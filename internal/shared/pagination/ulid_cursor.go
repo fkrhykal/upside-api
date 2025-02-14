@@ -3,7 +3,6 @@ package pagination
 import (
 	"encoding/base64"
 	"encoding/json"
-	"log"
 
 	"github.com/oklog/ulid/v2"
 )
@@ -26,7 +25,7 @@ type ULIDCursorPayload struct {
 
 func ParseULIDCursor(cursor string, limit int) (ULIDCursor, error) {
 	if cursor == "" {
-		return LimitNextULIDCursor(limit), nil
+		return &EmptyULIDCursor{limit: limit}, nil
 	}
 	jsonCursor, err := base64.RawURLEncoding.DecodeString(cursor)
 	if err != nil {
@@ -41,14 +40,5 @@ func ParseULIDCursor(cursor string, limit int) (ULIDCursor, error) {
 		return &PrevULIDCursor{id: payload.ID, cursor: &cursor, limit: limit}, nil
 	default:
 		return &NextULIDCursor{id: payload.ID, cursor: &cursor, limit: limit}, nil
-	}
-}
-
-func ULIDCursorMetadata(prev *PrevULIDCursor, next *NextULIDCursor) *CursorBasedMetadata {
-	log.Printf("prev: %+v", prev)
-	log.Printf("next: %+v", next)
-	return &CursorBasedMetadata{
-		Next:     next.Cursor(),
-		Previous: prev.Cursor(),
 	}
 }

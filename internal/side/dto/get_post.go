@@ -23,20 +23,22 @@ type Post struct {
 
 type Posts []*Post
 
+var EmptyPosts = make(Posts, 0)
+
 type Author struct {
 	ID       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
 }
 
-func FromEntitiesToPosts(posts entity.Posts) Posts {
+func MapPosts(posts entity.Posts) Posts {
 	postsDto := make(Posts, len(posts))
 	for i, post := range posts {
-		postsDto[i] = FromEntityToPost(post)
+		postsDto[i] = MapPost(post)
 	}
 	return postsDto
 }
 
-func FromEntityToPost(post *entity.Post) *Post {
+func MapPost(post *entity.Post) *Post {
 	return &Post{
 		ID:        post.ID,
 		Body:      post.Body,
