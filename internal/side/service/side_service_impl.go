@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/fkrhykal/upside-api/internal/shared/auth"
+	"github.com/fkrhykal/upside-api/internal/shared/collection"
 	"github.com/fkrhykal/upside-api/internal/shared/db"
 	"github.com/fkrhykal/upside-api/internal/shared/exception"
 	"github.com/fkrhykal/upside-api/internal/shared/log"
@@ -55,7 +56,7 @@ func (s *SideServiceImpl[T]) JoinSide(ctx *auth.AuthContext, req *dto.JoinSideRe
 		return nil, err
 	}
 	if membership != nil {
-		return nil, exception.ErrAlreadyJoinSide
+		return nil, exception.ErrAlreadyMember
 	}
 
 	membership = &entity.Membership{
@@ -92,11 +93,8 @@ func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.Of
 		}
 		return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
 	}
-	sideIDs := make(uuid.UUIDs, len(sides))
 
-	for i, side := range sides {
-		sideIDs[i] = side.ID
-	}
+	sideIDs := collection.Map(sides, func(side *entity.Side) uuid.UUID { return side.ID })
 
 	memberships, err := s.membershipRepository.FindManyBySideIDsAndMemberID(dbCtx, sideIDs, ctx.Credential.ID)
 	if err != nil {
@@ -109,9 +107,7 @@ func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.Of
 		membershipRegistry[membership.Side] = membership
 	}
 
-	sidesDto := make(dto.Sides, len(sides))
-
-	for i, side := range sides {
+	sidesDto := collection.Map(sides, func(side *entity.Side) *dto.Side {
 		sideDto := &dto.Side{ID: side.ID, Nick: side.Nick, Name: side.Description}
 		if membership, ok := membershipRegistry[side.ID]; ok {
 			sideDto.MembershipDetail = &dto.MembershipDetail{
@@ -119,8 +115,9 @@ func (s *SideServiceImpl[T]) GetSides(ctx *auth.AuthContext, page *pagination.Of
 				Role: membership.Role.String(),
 			}
 		}
-		sidesDto[i] = sideDto
-	}
+		return sideDto
+	})
+
 	return &dto.GetSidesResponse{Sides: sidesDto, Metadata: metadata}, nil
 }
 

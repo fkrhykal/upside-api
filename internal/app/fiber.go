@@ -19,7 +19,7 @@ func NewFiber(logger log.Logger) *fiber.App {
 		ErrorHandler: SetupErrorHandler(logger),
 	})
 
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{}))
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
@@ -34,7 +34,7 @@ func SetupErrorHandler(logger log.Logger) fiber.ErrorHandler {
 			return response.FailureWithDetail(c, fiber.StatusBadRequest, detail)
 		case *exception.AuthenticationError:
 			return response.FailureFromFiber(c, fiber.ErrUnauthorized)
-		case *exception.AlreadyJoinSideError:
+		case *exception.AlreadyMemberError:
 			return response.FailureFromFiber(c, fiber.ErrConflict)
 		case *fiber.Error:
 			return response.FailureFromFiber(c, err.(*fiber.Error))

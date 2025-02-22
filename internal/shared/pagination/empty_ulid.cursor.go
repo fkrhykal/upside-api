@@ -18,8 +18,6 @@ func (e *EmptyULIDCursor) Cursor() Base64Cursor {
 	return nil
 }
 
-func NewEmptyULIDCursor(limit int) *EmptyULIDCursor {
-	return &EmptyULIDCursor{
-		limit: limit,
-	}
+func NewEmptyULIDCursor() *EmptyULIDCursor {
+	return &EmptyULIDCursor{}
 }

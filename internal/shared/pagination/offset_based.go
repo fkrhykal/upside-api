@@ -26,7 +26,7 @@ func SafeOffsetBased(page int, limit int) *OffsetBased {
 	if page > MAX_PAGE {
 		page = MAX_PAGE
 	}
-	if limit > MIN_LIMIT {
+	if limit < MIN_LIMIT {
 		limit = MIN_LIMIT
 	}
 	if limit > MAX_LIMIT {

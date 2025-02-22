@@ -24,6 +24,7 @@ type PostServiceSuite struct {
 	postRepository       repository.PostRepository[db.SqlExecutor]
 	membershipRepository repository.MembershipRepository[db.SqlExecutor]
 	sideRepository       repository.SideRepository[db.SqlExecutor]
+	voteRepository       repository.VoteRepository[db.SqlExecutor]
 }
 
 func (ps *PostServiceSuite) TestCreateSide() {
@@ -70,10 +71,6 @@ func (ps *PostServiceSuite) TestGetLatestPosts() {
 
 	ps.Require().EqualValues(latestPostID, resLatestPostID)
 	ps.Require().EqualValues(postIDs[100-cursor.Limit()], nextCursor.ID)
-
-	// nextResult, err := ps.postService.GetLatestPosts(authCtx, nextCursor)
-	// ps.Require().NoError(err)
-
 }
 
 func (ps *PostServiceSuite) SetupSuite() {
@@ -83,6 +80,7 @@ func (ps *PostServiceSuite) SetupSuite() {
 	ps.membershipRepository = repository.NewPgMembershipRepository(logger)
 	ps.postRepository = repository.NewPgPostRepository(logger)
 	ps.sideRepository = repository.NewPgSideRepository(logger)
+	ps.voteRepository = repository.NewPgVoteRepository(logger)
 	ps.ctxManager = db.NewSqlContextManager(logger, ps.DB)
 
 	validator := app.NewGoPlaygroundValidator(logger)
@@ -94,6 +92,7 @@ func (ps *PostServiceSuite) SetupSuite() {
 		ps.sideRepository,
 		ps.membershipRepository,
 		ps.postRepository,
+		ps.voteRepository,
 	)
 }
 

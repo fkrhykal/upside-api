@@ -3,6 +3,7 @@ package pagination
 import (
 	"errors"
 
+	c "github.com/fkrhykal/upside-api/internal/shared/collection"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -15,30 +16,29 @@ func ProcessULIDCursorMetadata[T comparable](data []T, cursor ULIDCursor, retrie
 	var next ULIDCursor
 	var prev ULIDCursor
 	var err error
-	c := Collect(data)
 
 	switch cursor.(type) {
 	case *EmptyULIDCursor:
 		if len(data) <= cursor.Limit() {
-			next = NewEmptyULIDCursor(cursor.Limit())
+			next = NewEmptyULIDCursor()
 		} else {
 			var id *ulid.ULID
 
 			if len(data) < cursor.Limit()+1 {
-				id = retrieveID(c.Last())
+				id = retrieveID(c.Last(data))
 			} else {
-				id = retrieveID(c.At(c.LastIndex() - 2))
+				id = retrieveID(c.At(data, c.LastIndex(data)-2))
 			}
 
-			next, err = NewNextULIDCursor(id, cursor.Limit())
+			next, err = NewNextULIDCursor(id)
 			if err != nil {
 				return nil, err
 			}
 		}
-		prev = NewEmptyULIDCursor(cursor.Limit())
+		prev = NewEmptyULIDCursor()
 
 		return &ULIDCursorMetadata[T]{
-			Data: c.Slice(0, cursor.Limit()),
+			Data: c.Slice(data, 0, cursor.Limit()),
 			Metadata: &CursorBasedMetadata{
 				Next:     next.Cursor(),
 				Previous: prev.Cursor(),
@@ -47,19 +47,19 @@ func ProcessULIDCursorMetadata[T comparable](data []T, cursor ULIDCursor, retrie
 
 	case *NextULIDCursor:
 		if len(data) < cursor.Limit()+2 {
-			next = NewEmptyULIDCursor(cursor.Limit())
+			next = NewEmptyULIDCursor()
 		} else {
-			next, err = NewNextULIDCursor(retrieveID(c.Penultimate()), cursor.Limit())
+			next, err = NewNextULIDCursor(retrieveID(c.Penultimate(data)))
 			if err != nil {
 				return nil, err
 			}
 		}
-		prev, err = NewPrevULIDCursor(cursor.ID(), cursor.Limit())
+		prev, err = NewPrevULIDCursor(cursor.ID())
 		if err != nil {
 			return nil, err
 		}
 		return &ULIDCursorMetadata[T]{
-			Data: c.Slice(1, cursor.Limit()+1),
+			Data: c.Slice(data, 1, cursor.Limit()+1),
 			Metadata: &CursorBasedMetadata{
 				Next:     next.Cursor(),
 				Previous: prev.Cursor(),
@@ -68,15 +68,15 @@ func ProcessULIDCursorMetadata[T comparable](data []T, cursor ULIDCursor, retrie
 
 	case *PrevULIDCursor:
 		if len(data) < cursor.Limit()+2 {
-			prev = NewEmptyULIDCursor(cursor.Limit())
+			prev = NewEmptyULIDCursor()
 		} else {
-			prev, err = NewPrevULIDCursor(retrieveID(c.Second()), cursor.Limit())
+			prev, err = NewPrevULIDCursor(retrieveID(c.Second(data)))
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		next, err = NewNextULIDCursor(cursor.ID(), cursor.Limit())
+		next, err = NewNextULIDCursor(cursor.ID())
 		if err != nil {
 			return nil, err
 		}
@@ -92,55 +92,6 @@ func ProcessULIDCursorMetadata[T comparable](data []T, cursor ULIDCursor, retrie
 		}, nil
 
 	default:
-		return nil, errors.New("cursor cannot be nil")
+		return nil, errors.New("cursor nil")
 	}
-}
-
-type Collection[T comparable] struct {
-	data []T
-	null T
-}
-
-func Collect[T comparable](data []T) *Collection[T] {
-	return &Collection[T]{data: data}
-}
-
-func (d Collection[T]) Slice(i, j int) []T {
-	if d.At(i) == d.null {
-		return d.data
-	}
-	if d.At(j) == d.null {
-		return d.data[i:]
-	}
-	return d.data[i:j]
-}
-
-func (d Collection[T]) At(i int) T {
-	if d.LastIndex() < 0 {
-		return d.null
-	}
-	if d.LastIndex() < i {
-		return d.null
-	}
-	return d.data[i]
-}
-
-func (d Collection[T]) First() T {
-	return d.At(0)
-}
-
-func (d Collection[T]) Second() T {
-	return d.At(1)
-}
-
-func (d Collection[T]) Last() T {
-	return d.At(d.LastIndex())
-}
-
-func (d Collection[T]) Penultimate() T {
-	return d.At(d.LastIndex() - 1)
-}
-
-func (d Collection[T]) LastIndex() int {
-	return len(d.data) - 1
 }

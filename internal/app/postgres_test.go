@@ -12,9 +12,7 @@ type PostgresTestSuite struct {
 }
 
 func (p *PostgresTestSuite) TestCreatePostgresDB() {
-	if p.DB == nil {
-		p.FailNow("unable to create db")
-	}
+	p.Require().NotNil(p.DB, "unable to create DB")
 }
 
 func TestPostgres(t *testing.T) {

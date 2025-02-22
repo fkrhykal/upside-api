@@ -70,3 +70,29 @@ func SetupPosts(ctx db.DBContext[db.SqlExecutor], s *suite.Suite, authorID uuid.
 
 	return UUIDs
 }
+
+func SetupVote(ctx db.DBContext[db.SqlExecutor], s *suite.Suite, voterID uuid.UUID, postID ulid.ULID, voteKind entity.VoteKind) uuid.UUID {
+	query := `INSERT INTO votes(id, voter_id, post_id, kind) VALUES($1, $2, $3, $4)`
+	voteID := uuid.New()
+	_, err := ctx.Executor().ExecContext(ctx, query, voteID, voterID, postID.String(), voteKind)
+	s.Require().NoError(err)
+	return voteID
+}
+
+func SetupVotes(ctx db.DBContext[db.SqlExecutor], s *suite.Suite, voterID uuid.UUID, postIDs []ulid.ULID, voteKind entity.VoteKind) uuid.UUIDs {
+	query := `INSERT INTO votes(id, voter_id, post_id, kind) VALUES($1, $2, $3, $4)`
+
+	stmt, err := ctx.Executor().PrepareContext(ctx, query)
+	defer stmt.Close()
+	s.Require().NoError(err)
+
+	voteIDs := make(uuid.UUIDs, len(postIDs))
+
+	for i, postID := range postIDs {
+		voteID := uuid.New()
+		_, err := stmt.ExecContext(ctx, voteID, voterID, postID.String(), voteKind)
+		s.Require().NoError(err)
+		voteIDs[i] = voteID
+	}
+	return voteIDs
+}

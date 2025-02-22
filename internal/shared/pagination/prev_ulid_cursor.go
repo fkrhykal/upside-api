@@ -25,7 +25,7 @@ func (p *PrevULIDCursor) Limit() int {
 	return p.limit
 }
 
-func NewPrevULIDCursor(ID *ulid.ULID, limit int) (*PrevULIDCursor, error) {
+func NewPrevULIDCursor(ID *ulid.ULID) (*PrevULIDCursor, error) {
 	payload := &ULIDCursorPayload{
 		ID:        ID,
 		Direction: "prev",
@@ -38,6 +38,5 @@ func NewPrevULIDCursor(ID *ulid.ULID, limit int) (*PrevULIDCursor, error) {
 	return &PrevULIDCursor{
 		id:     ID,
 		cursor: &cursor,
-		limit:  limit,
 	}, nil
 }

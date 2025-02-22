@@ -21,19 +21,6 @@ type PgPostRepositorySuite struct {
 	ctxManager     db.CtxManager[db.SqlExecutor]
 }
 
-func (p *PgPostRepositorySuite) TestFindManyWithLimit() {
-	ctx := context.Background()
-	dbCtx := p.ctxManager.NewDBContext(ctx)
-
-	sideID := helpers.SetupSide(dbCtx, &p.Suite)
-	userID := helpers.SetupUser(dbCtx, &p.Suite)
-	helpers.SetupPosts(dbCtx, &p.Suite, userID, sideID, 10)
-
-	posts, err := p.postRepository.FindManyWithLimit(dbCtx, 5)
-	p.Require().NoError(err)
-	p.Require().Len(posts, 5)
-}
-
 func (p *PgPostRepositorySuite) TestSavePost() {
 	ctx := context.Background()
 	dbCtx := p.ctxManager.NewDBContext(ctx)
@@ -45,6 +32,22 @@ func (p *PgPostRepositorySuite) TestSavePost() {
 
 	err := p.postRepository.Save(dbCtx, post)
 	p.Require().NoError(err)
+
+}
+
+func (p *PgPostRepositorySuite) TestFindByID() {
+	ctx := context.Background()
+	dbCtx := p.ctxManager.NewDBContext(ctx)
+
+	sideID := helpers.SetupSide(dbCtx, &p.Suite)
+	userID := helpers.SetupUser(dbCtx, &p.Suite)
+	postIDs := helpers.SetupPosts(dbCtx, &p.Suite, userID, sideID, 1)
+
+	post, err := p.postRepository.FindByID(dbCtx, postIDs[0])
+	p.Require().NoError(err)
+	p.Require().EqualValues(postIDs[0], post.ID)
+	p.Require().EqualValues(sideID, post.Side.ID)
+	p.Require().EqualValues(userID, post.Author.ID)
 }
 
 func (p *PgPostRepositorySuite) SetupSuite() {

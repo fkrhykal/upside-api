@@ -42,7 +42,12 @@ func (pr *PgPostRepository) Save(ctx db.DBContext[db.SqlExecutor], post *entity.
 	return nil
 }
 
-func (pr *PgPostRepository) FindManyWithLimit(ctx db.DBContext[db.SqlExecutor], limit int) (entity.Posts, error) {
+func (pr *PgPostRepository) FindByID(ctx db.DBContext[db.SqlExecutor], postID ulid.ULID) (*entity.Post, error) {
+	post := &entity.Post{
+		Side:   &entity.Side{},
+		Author: &entity.Author{},
+	}
+	var id string
 	query := `SELECT 
 	p.id, p.body, p.created_at, p.updated_at,
 	u.id, u.username,
@@ -50,47 +55,24 @@ func (pr *PgPostRepository) FindManyWithLimit(ctx db.DBContext[db.SqlExecutor], 
 	FROM posts AS p
 	JOIN sides AS s ON p.side_id = s.id
 	JOIN users AS u ON p.author_id = u.id
-	ORDER BY p.id DESC
-	LIMIT $1`
+	WHERE p.id = $1`
 
-	var posts entity.Posts
-
-	rows, err := ctx.Executor().QueryContext(ctx, query, limit)
-	if err != nil {
-		pr.logger.Warnf("%+v", err)
-		return entity.EmptyPosts, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id string
-		post := &entity.Post{
-			Author: &entity.Author{},
-			Side:   &entity.Side{},
-		}
-		if err := rows.Scan(
+	err := ctx.Executor().
+		QueryRowContext(ctx, query, postID.String()).
+		Scan(
 			&id, &post.Body, &post.CreatedAt, &post.UpdatedAt,
 			&post.Author.ID, &post.Author.Username,
 			&post.Side.ID, &post.Side.Nick, &post.Side.Description, &post.Side.CreatedAt,
-		); err != nil {
-			pr.logger.Warnf("%+v", err)
-			return entity.EmptyPosts, err
-		}
-		postID, err := ulid.Parse(id)
-		if err != nil {
-			pr.logger.Warnf("%+v", err)
-			return entity.EmptyPosts, err
-		}
-		post.ID = postID
-		posts = append(posts, post)
+		)
+	if err != nil {
+		return nil, err
 	}
-
-	if err = rows.Err(); err != nil {
-		pr.logger.Warnf("%+v", err)
-		return entity.EmptyPosts, err
+	postULID, err := ulid.Parse(id)
+	if err != nil {
+		return nil, err
 	}
-
-	return posts, nil
+	post.ID = postULID
+	return post, nil
 }
 
 func (pr *PgPostRepository) FindManyWithULIDCursor(ctx db.DBContext[db.SqlExecutor], cursor pagination.ULIDCursor) (*pagination.ULIDCursorMetadata[*entity.Post], error) {

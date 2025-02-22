@@ -8,13 +8,15 @@ import (
 )
 
 type Post struct {
-	ID        ulid.ULID
+	ID        PostID
 	Body      string
 	CreatedAt int64
 	UpdatedAt int64
 	Author    *Author
 	Side      *Side
 }
+
+type PostID = ulid.ULID
 
 type Author struct {
 	ID       uuid.UUID

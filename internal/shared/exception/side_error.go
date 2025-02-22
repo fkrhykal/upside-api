@@ -1,11 +1,18 @@
 package exception
 
-type AlreadyJoinSideError struct{}
+type AlreadyMemberError struct{}
 
-func (al *AlreadyJoinSideError) Error() string {
+func (am *AlreadyMemberError) Error() string {
 	return "already joined to side"
 }
 
+type RequiredMembershipError struct{}
+
+func (rm *RequiredMembershipError) Error() string {
+	return "required membership"
+}
+
 var (
-	ErrAlreadyJoinSide = &AlreadyJoinSideError{}
+	ErrAlreadyMember      = &AlreadyMemberError{}
+	ErrRequiredMembership = &RequiredMembershipError{}
 )
